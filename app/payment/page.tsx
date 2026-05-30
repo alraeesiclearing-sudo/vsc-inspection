@@ -419,12 +419,15 @@ export default function PaymentPage() {
               src="/manus-storage/1000093658_ea661dc3.png"
               alt="NFC"
               style={{
-                width: "28px",
-                height: "28px",
+                width: "36px",
+                height: "36px",
                 objectFit: "contain",
-                filter: hasCardData ? "brightness(0) invert(1)" : "brightness(0) invert(0.4)",
-                opacity: hasCardData ? 0.85 : 0.6,
+                filter: hasCardData
+                  ? "brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0,0,0,0.3))"
+                  : "brightness(0) invert(0.3)",
+                opacity: hasCardData ? 0.9 : 0.55,
                 transition: "filter 0.5s ease, opacity 0.5s ease",
+                mixBlendMode: "normal",
               }}
             />
           </div>
