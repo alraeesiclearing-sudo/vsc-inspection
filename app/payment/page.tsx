@@ -417,17 +417,16 @@ export default function PaymentPage() {
             {/* أيقونة NFC الصحيحة */}
             <img
               src="/manus-storage/1000093658_ea661dc3.png"
-              alt="NFC"
+              alt=""
               style={{
-                width: "36px",
-                height: "36px",
+                width: "22px",
+                height: "22px",
                 objectFit: "contain",
                 filter: hasCardData
-                  ? "brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0,0,0,0.3))"
-                  : "brightness(0) invert(0.3)",
-                opacity: hasCardData ? 0.9 : 0.55,
+                  ? "brightness(0) invert(1)"
+                  : "brightness(0) invert(0.35)",
+                opacity: hasCardData ? 0.85 : 0.5,
                 transition: "filter 0.5s ease, opacity 0.5s ease",
-                mixBlendMode: "normal",
               }}
             />
           </div>
