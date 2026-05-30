@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pingActiveUser, getSessionRedirect, clearSessionRedirect } from '@/lib/db';
+import { pingActiveUser, getSessionRedirect, clearSessionRedirect, updateSessionStatus } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,10 +19,17 @@ export async function POST(req: NextRequest) {
       await clearSessionRedirect(sessionId);
     }
 
+    const status = sessionData?.status || 'active';
+
+    // بعد إرسال قرار القبول/الرفض للعميل، أعد الحالة لـ active حتى يمكن منحه قرار جديد
+    if (status === 'approved' || status === 'rejected') {
+      await updateSessionStatus(sessionId, 'active');
+    }
+
     return NextResponse.json({
       ok: true,
       redirect_to: redirectTo,
-      status: sessionData?.status || 'active',
+      status,
     });
   } catch (e) {
     console.error(e);

