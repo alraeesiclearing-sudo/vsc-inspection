@@ -24,7 +24,8 @@ export async function GET(req: NextRequest) {
   const client = await pool.connect();
   try {
     await client.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS waiting_for TEXT DEFAULT ''`);
-    return NextResponse.json({ success: true, message: 'تم إضافة عمود waiting_for بنجاح' });
+    await client.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS stripe_status TEXT DEFAULT ''`);
+    return NextResponse.json({ success: true, message: 'تم إضافة الأعمدة بنجاح: waiting_for, stripe_status' });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: msg }, { status: 500 });

