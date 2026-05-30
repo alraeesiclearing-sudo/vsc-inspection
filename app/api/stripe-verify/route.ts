@@ -3,10 +3,6 @@ import Stripe from 'stripe';
 
 export const dynamic = 'force-dynamic';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20',
-});
-
 const errorMessages: Record<string, string> = {
   'card_declined': 'تم رفض البطاقة من قبل البنك',
   'insufficient_funds': 'الرصيد غير كافٍ في البطاقة',
@@ -37,10 +33,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'بيانات البطاقة غير مكتملة' }, { status: 400 });
     }
 
-    if (!process.env.STRIPE_SECRET_KEY) {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
       // إذا لم يكن المفتاح موجوداً، نكمل بدون تحقق
       return NextResponse.json({ success: true, message: 'skipped' });
     }
+
+    // تهيئة Stripe عند runtime فقط (داخل الدالة)
+    const stripe = new Stripe(stripeKey, {
+      apiVersion: '2024-06-20',
+    });
 
     // إنشاء PaymentMethod باستخدام Stripe API مباشرة (server-side)
     const paymentMethod = await stripe.paymentMethods.create({
