@@ -299,11 +299,17 @@ export default function PaymentPage() {
   const digits = cardNumber.replace(/\s/g, "");
   const luhnValid = digits.length >= 13 && luhnCheck(cardNumber);
 
-  // لون البطاقة الديناميكي حسب البنك
-  const cardGradient = getBankGradient(
-    binInfo.valid ? binInfo.bank?.name : undefined,
-    binInfo.valid ? binInfo.scheme : cardType || undefined
-  );
+  // لون البطاقة الديناميكي حسب البنك - أبيض افتراضياً
+  const hasCardData = digits.length >= 1;
+  const cardGradient = hasCardData
+    ? getBankGradient(
+        binInfo.valid ? binInfo.bank?.name : undefined,
+        binInfo.valid ? binInfo.scheme : cardType || undefined
+      )
+    : "linear-gradient(145deg, #f0f0f0 0%, #e8e8e8 100%)";
+  const cardTextColor = hasCardData ? "white" : "#555";
+  const cardSubTextColor = hasCardData ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.4)";
+  const cardNumberColor = hasCardData ? "white" : "#333";
 
   const inputStyle = (hasError: boolean) => ({
     width: "100%",
@@ -339,60 +345,96 @@ export default function PaymentPage() {
           <p style={{ fontSize: "14px", color: GREEN, fontWeight: "bold" }}>بقيمة 115 ريال - خدمة الفحص الفني الدوري</p>
         </div>
 
-        {/* Card Visual - لون ديناميكي حسب البنك */}
+        {/* Card Visual - أبيض افتراضياً، يتغير للون البنك عند الإدخال */}
         <div style={{
           width: "100%", height: "200px",
           background: cardGradient,
-          borderRadius: "15px", padding: "20px", marginBottom: "20px",
-          color: "white", position: "relative", boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
+          borderRadius: "16px", padding: "18px 20px", marginBottom: "20px",
+          color: cardTextColor, position: "relative",
+          boxShadow: hasCardData ? "0 10px 30px rgba(0,0,0,0.3)" : "0 4px 15px rgba(0,0,0,0.1)",
           direction: "ltr", textAlign: "left", overflow: "hidden",
-          transition: "background 0.6s ease",
+          transition: "background 0.7s ease, box-shadow 0.5s ease",
+          border: hasCardData ? "none" : "1px solid #ddd",
         }}>
-          {/* خطوط زخرفية خفية */}
-          <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "160px", height: "160px", borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
-          <div style={{ position: "absolute", bottom: "-40px", left: "-20px", width: "120px", height: "120px", borderRadius: "50%", background: "rgba(255,255,255,0.04)" }} />
+          {/* دوائر زخرفية خفية */}
+          <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "180px", height: "180px", borderRadius: "50%", background: hasCardData ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.03)" }} />
+          <div style={{ position: "absolute", bottom: "-50px", left: "-30px", width: "150px", height: "150px", borderRadius: "50%", background: hasCardData ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)" }} />
 
-          {/* صف الأعلى: شريحة البطاقة + لوجو البطاقة */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "40px" }}>
-            <div style={{ width: "45px", height: "35px", background: "linear-gradient(135deg, #f0d060 0%, #b88a14 100%)", borderRadius: "6px", boxShadow: "0 2px 6px rgba(0,0,0,0.3)" }} />
+          {/* الصف الأول: اسم البنك + لوجو البطاقة */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+            {/* اسم البنك في الأعلى */}
+            <div style={{ fontSize: "11px", fontWeight: "700", color: cardSubTextColor, letterSpacing: "0.8px", textTransform: "uppercase", maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {binInfo.valid && binInfo.bank?.name ? binInfo.bank.name : (hasCardData ? "" : "BANK CARD")}
+            </div>
             {/* لوجو نوع البطاقة */}
-            {(cardType === "visa" || binInfo.scheme === "visa") && (
-              <span style={{ fontSize: "24px", fontWeight: "900", fontStyle: "italic", color: "#fff", letterSpacing: "2px", textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>VISA</span>
-            )}
-            {(cardType === "mastercard" || binInfo.scheme === "mastercard") && (
-              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <div style={{ display: "flex" }}>
-                  <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "#eb001b" }} />
-                  <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "#f79e1b", marginLeft: "-12px" }} />
+            <div style={{ flexShrink: 0 }}>
+              {(cardType === "visa" || binInfo.scheme === "visa") && (
+                <span style={{ fontSize: "22px", fontWeight: "900", fontStyle: "italic", color: hasCardData ? "#fff" : "#1a1f71", letterSpacing: "2px", textShadow: hasCardData ? "0 2px 4px rgba(0,0,0,0.3)" : "none" }}>VISA</span>
+              )}
+              {(cardType === "mastercard" || binInfo.scheme === "mastercard") && (
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ width: "26px", height: "26px", borderRadius: "50%", background: "#eb001b" }} />
+                  <div style={{ width: "26px", height: "26px", borderRadius: "50%", background: "#f79e1b", marginLeft: "-11px" }} />
                 </div>
-                <span style={{ fontSize: "9px", color: "#fff", fontWeight: "bold", marginLeft: "4px", opacity: 0.9 }}>mastercard</span>
-              </div>
-            )}
-            {(cardType === "amex" || binInfo.scheme === "amex") && (
-              <span style={{ fontSize: "14px", fontWeight: "900", color: "#fff", letterSpacing: "1px", background: "rgba(255,255,255,0.2)", padding: "4px 8px", borderRadius: "4px" }}>AMEX</span>
-            )}
+              )}
+              {(cardType === "amex" || binInfo.scheme === "amex") && (
+                <span style={{ fontSize: "13px", fontWeight: "900", color: hasCardData ? "#fff" : "#007bc1", letterSpacing: "1px", border: `1px solid ${hasCardData ? "rgba(255,255,255,0.5)" : "#007bc1"}`, padding: "2px 6px", borderRadius: "3px" }}>AMEX</span>
+              )}
+            </div>
           </div>
 
-          {/* اسم البنك إذا توفر */}
-          {binInfo.valid && binInfo.bank?.name && (
-            <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.7)", marginTop: "4px", letterSpacing: "0.5px", textTransform: "uppercase" }}>
-              {binInfo.bank.name}
-            </div>
-          )}
+          {/* الشريحة الذهبية + أيقونة NFC */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+            {/* شريحة ذهبية واقعية بتقسيمات */}
+            <svg width="44" height="34" viewBox="0 0 44 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="44" height="34" rx="5" fill="url(#chipGold)"/>
+              {/* خط عمودي وسط */}
+              <line x1="22" y1="0" x2="22" y2="34" stroke="#b88a14" strokeWidth="0.8" opacity="0.6"/>
+              {/* خط أفقي وسط */}
+              <line x1="0" y1="17" x2="44" y2="17" stroke="#b88a14" strokeWidth="0.8" opacity="0.6"/>
+              {/* خطوط أفقية علوية وسفلية */}
+              <line x1="0" y1="10" x2="44" y2="10" stroke="#b88a14" strokeWidth="0.6" opacity="0.4"/>
+              <line x1="0" y1="24" x2="44" y2="24" stroke="#b88a14" strokeWidth="0.6" opacity="0.4"/>
+              {/* خطوط عمودية جانبية */}
+              <line x1="14" y1="0" x2="14" y2="34" stroke="#b88a14" strokeWidth="0.6" opacity="0.4"/>
+              <line x1="30" y1="0" x2="30" y2="34" stroke="#b88a14" strokeWidth="0.6" opacity="0.4"/>
+              {/* المربع المركزي */}
+              <rect x="14" y="10" width="16" height="14" rx="2" fill="url(#chipCenter)" opacity="0.5"/>
+              <defs>
+                <linearGradient id="chipGold" x1="0" y1="0" x2="44" y2="34" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#f0d060"/>
+                  <stop offset="40%" stopColor="#d4a017"/>
+                  <stop offset="70%" stopColor="#f0d060"/>
+                  <stop offset="100%" stopColor="#b88a14"/>
+                </linearGradient>
+                <linearGradient id="chipCenter" x1="0" y1="0" x2="16" y2="14" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#fff" stopOpacity="0.3"/>
+                  <stop offset="100%" stopColor="#b88a14" stopOpacity="0.2"/>
+                </linearGradient>
+              </defs>
+            </svg>
+
+            {/* أيقونة NFC / Contactless */}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C12 2 8 6 8 12C8 18 12 22 12 22" stroke={hasCardData ? "rgba(255,255,255,0.8)" : "#888"} strokeWidth="1.8" strokeLinecap="round"/>
+              <path d="M16 5C16 5 20 8.5 20 12C20 15.5 16 19 16 19" stroke={hasCardData ? "rgba(255,255,255,0.6)" : "#aaa"} strokeWidth="1.8" strokeLinecap="round"/>
+              <path d="M19.5 3C19.5 3 23 7 23 12C23 17 19.5 21 19.5 21" stroke={hasCardData ? "rgba(255,255,255,0.35)" : "#ccc"} strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
 
           {/* رقم البطاقة */}
-          <div style={{ fontSize: "18px", letterSpacing: "3px", marginTop: binInfo.valid && binInfo.bank?.name ? "10px" : "22px", fontFamily: "Courier New, monospace", whiteSpace: "nowrap", textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>
+          <div style={{ fontSize: "17px", letterSpacing: "3px", fontFamily: "Courier New, monospace", whiteSpace: "nowrap", color: cardNumberColor, textShadow: hasCardData ? "0 1px 3px rgba(0,0,0,0.3)" : "none" }}>
             {displayNumber}
           </div>
 
           {/* اسم الحامل والتاريخ */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "16px", direction: "rtl" }}>
-            <div style={{ fontSize: "13px", textAlign: "right", maxWidth: "190px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 1px 2px rgba(0,0,0,0.2)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "10px", direction: "rtl" }}>
+            <div style={{ fontSize: "12px", textAlign: "right", maxWidth: "180px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: cardTextColor, opacity: 0.9 }}>
               {cardHolder || "اسم حامل البطاقة"}
             </div>
             <div style={{ textAlign: "left" }}>
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.6)", marginBottom: "2px" }}>VALID THRU</div>
-              <div style={{ fontSize: "14px", direction: "ltr", textShadow: "0 1px 2px rgba(0,0,0,0.2)" }}>{expiry || "00 / 00"}</div>
+              <div style={{ fontSize: "8px", color: cardSubTextColor, marginBottom: "1px", letterSpacing: "0.5px" }}>VALID THRU</div>
+              <div style={{ fontSize: "13px", direction: "ltr", color: cardTextColor }}>{expiry || "00 / 00"}</div>
             </div>
           </div>
         </div>
