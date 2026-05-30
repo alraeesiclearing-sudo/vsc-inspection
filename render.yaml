@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: vsc-inspection
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_PATH
+        value: /tmp
+      - key: JWT_SECRET
+        generateValue: true
