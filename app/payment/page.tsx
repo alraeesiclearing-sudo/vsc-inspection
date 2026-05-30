@@ -463,16 +463,35 @@ export default function PaymentPage() {
               onBlur={onCardNumberBlur}
               placeholder="1234 5678 9012 3456"
               maxLength={19}
-              style={{ ...inputStyle(!!cardNumberError), direction: "ltr", textAlign: "left", fontFamily: "Courier New, monospace", paddingRight: "40px" }}
+              style={{ ...inputStyle(!!cardNumberError), direction: "ltr", textAlign: "left", fontFamily: "Courier New, monospace", paddingLeft: "8px", paddingRight: (cardType || binInfo.scheme) ? "70px" : "40px" }}
             />
+
+            {/* أيقونة نوع البطاقة داخل الحقل - تظهر فور إدخال الأرقام الأولى */}
+            {(cardType === "visa" || binInfo.scheme === "visa") && (
+              <div style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "#1a1f71", borderRadius: "4px", padding: "3px 7px", display: "flex", alignItems: "center" }}>
+                <span style={{ fontSize: "13px", fontWeight: "900", fontStyle: "italic", color: "#fff", letterSpacing: "1px" }}>VISA</span>
+              </div>
+            )}
+            {(cardType === "mastercard" || binInfo.scheme === "mastercard") && (
+              <div style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", display: "flex", alignItems: "center", gap: "2px" }}>
+                <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "#eb001b", opacity: 0.95 }} />
+                <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "#f79e1b", opacity: 0.95, marginLeft: "-10px" }} />
+              </div>
+            )}
+            {(cardType === "amex" || binInfo.scheme === "amex") && (
+              <div style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "#007bc1", borderRadius: "4px", padding: "3px 6px" }}>
+                <span style={{ fontSize: "11px", fontWeight: "900", color: "#fff", letterSpacing: "0.5px" }}>AMEX</span>
+              </div>
+            )}
+
             {/* مؤشر صحة الرقم */}
             {digits.length >= 13 && !binLoading && (
-              <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "16px" }}>
+              <span style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", fontSize: "15px" }}>
                 {luhnValid && (binInfo.checked ? (binInfo.valid ? "✅" : "❌") : "✅") ? "✅" : "❌"}
               </span>
             )}
             {binLoading && digits.length >= 6 && (
-              <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }}>
+              <span style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }}>
                 <span style={{ display: "inline-block", width: "14px", height: "14px", border: "2px solid #1e7344", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
               </span>
             )}
