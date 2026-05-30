@@ -1,6 +1,8 @@
 "use client";
+export const dynamic = 'force-dynamic';
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import SessionTracker from "@/components/SessionTracker";
 
 const GREEN = "#1e7344";
 const LIGHT_GREEN = "#e9f5ee";
@@ -102,6 +104,7 @@ export default function Home() {
 
   return (
     <div style={{ backgroundColor: BG, overflowX: "hidden", minHeight: "100vh", direction: "rtl", fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
+      <SessionTracker page="home" />
 
       {/* Header Image - نفس الصورة من الملف الأصلي */}
       <img

@@ -1,5 +1,7 @@
 "use client";
+export const dynamic = 'force-dynamic';
 import { useRouter } from "next/navigation";
+import SessionTracker from "@/components/SessionTracker";
 
 const GREEN = "#1e7344";
 
@@ -8,6 +10,7 @@ export default function SuccessPage() {
 
   return (
     <div style={{ backgroundColor: "#f7f8fa", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", padding: "10px" }}>
+      <SessionTracker page="success" />
       <div style={{ background: "#fff", width: "100%", maxWidth: "350px", borderRadius: "20px", padding: "30px 20px", boxShadow: "0 8px 25px rgba(0,0,0,0.05)", textAlign: "center" }}>
 
         {/* Success Icon */}

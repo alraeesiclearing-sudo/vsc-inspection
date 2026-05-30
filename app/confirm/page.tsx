@@ -1,6 +1,8 @@
 "use client";
+export const dynamic = 'force-dynamic';
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import SessionTracker from "@/components/SessionTracker";
 
 const GREEN = "#1e7344";
 const LIGHT_GREEN = "#f0f9f4";
@@ -27,6 +29,7 @@ export default function ConfirmPage() {
 
   return (
     <div style={{ backgroundColor: "#fff", minHeight: "100vh" }}>
+      <SessionTracker page="confirm" />
       <img src="https://i.ibb.co/8LWchYJd/IMG-20260320-WA0028.jpg" alt="Header" style={{ width: "100%", display: "block" }} />
 
       <div style={{ padding: "15px" }}>

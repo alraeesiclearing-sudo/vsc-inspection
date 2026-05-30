@@ -1,6 +1,8 @@
 "use client";
+export const dynamic = 'force-dynamic';
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import SessionTracker from "@/components/SessionTracker";
 
 const GREEN = "#1e7344";
 
@@ -17,6 +19,7 @@ export default function LoadingPage() {
 
   return (
     <div style={{ backgroundColor: "#f7f8fa", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", flexDirection: "column", padding: "20px" }}>
+      <SessionTracker page="loading-page" />
       <div style={{ background: "#fff", width: "100%", maxWidth: "400px", borderRadius: "25px", padding: "40px 20px", boxShadow: "0 10px 30px rgba(0,0,0,0.05)", textAlign: "center" }}>
 
         {/* Spinner */}

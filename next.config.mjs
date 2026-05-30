@@ -1,14 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-  typescript: {
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors.
-    ignoreBuildErrors: true,
+  images: {
+    unoptimized: true,
+  },
+  experimental: {
+    serverComponentsExternalPackages: ['better-sqlite3'],
+  },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      const externals = Array.isArray(config.externals) ? config.externals : [];
+      config.externals = [...externals, 'better-sqlite3'];
+    }
+    return config;
   },
 };
 

