@@ -49,6 +49,44 @@ type BinInfo = {
   error?: string;
 };
 
+// ألوان البنوك حسب اسم البنك
+function getBankGradient(bankName?: string, scheme?: string): string {
+  if (!bankName) {
+    if (scheme === "visa") return "linear-gradient(135deg, #1a1f71 0%, #0d1147 100%)";
+    if (scheme === "mastercard") return "linear-gradient(135deg, #eb001b 0%, #f79e1b 100%)";
+    if (scheme === "amex") return "linear-gradient(135deg, #007bc1 0%, #004f80 100%)";
+    return "linear-gradient(135deg, #1e7344 0%, #114126 100%)";
+  }
+  const name = bankName.toLowerCase();
+  // بنوك سعودية
+  if (name.includes("al rajhi") || name.includes("الراجحي")) return "linear-gradient(135deg, #006633 0%, #004422 100%)";
+  if (name.includes("national") || name.includes("الأهلي")) return "linear-gradient(135deg, #c8102e 0%, #8b0a1e 100%)";
+  if (name.includes("riyad") || name.includes("الرياض")) return "linear-gradient(135deg, #004b87 0%, #002d52 100%)";
+  if (name.includes("samba") || name.includes("سامبا")) return "linear-gradient(135deg, #e31837 0%, #9b0f25 100%)";
+  if (name.includes("saudi british") || name.includes("sabb") || name.includes("سابك")) return "linear-gradient(135deg, #db0011 0%, #8b0009 100%)";
+  if (name.includes("arab national") || name.includes("العربي الوطني")) return "linear-gradient(135deg, #006b3f 0%, #004428 100%)";
+  if (name.includes("banque saudi fransi") || name.includes("الفرنسي")) return "linear-gradient(135deg, #003087 0%, #001a4d 100%)";
+  if (name.includes("alinma") || name.includes("الإنماء")) return "linear-gradient(135deg, #00843d 0%, #005228 100%)";
+  if (name.includes("gulf") || name.includes("الخليج")) return "linear-gradient(135deg, #0066b3 0%, #003d6b 100%)";
+  // بنوك إماراتية
+  if (name.includes("emirates nbd") || name.includes("إمارات")) return "linear-gradient(135deg, #c8102e 0%, #8b0a1e 100%)";
+  if (name.includes("mashreq") || name.includes("مشرق")) return "linear-gradient(135deg, #e2001a 0%, #9b0011 100%)";
+  if (name.includes("adcb") || name.includes("أبوظبي")) return "linear-gradient(135deg, #e31837 0%, #9b0f25 100%)";
+  if (name.includes("fab") || name.includes("first abu dhabi")) return "linear-gradient(135deg, #009a44 0%, #006b2f 100%)";
+  // بنوك عالمية
+  if (name.includes("hsbc")) return "linear-gradient(135deg, #db0011 0%, #8b0009 100%)";
+  if (name.includes("citibank") || name.includes("citi")) return "linear-gradient(135deg, #003b70 0%, #001f3d 100%)";
+  if (name.includes("standard chartered")) return "linear-gradient(135deg, #0072aa 0%, #004a6e 100%)";
+  if (name.includes("barclays")) return "linear-gradient(135deg, #00aeef 0%, #0077a3 100%)";
+  if (name.includes("chase") || name.includes("jpmorgan")) return "linear-gradient(135deg, #005eb8 0%, #003d7a 100%)";
+  if (name.includes("bank of america")) return "linear-gradient(135deg, #e31837 0%, #9b0f25 100%)";
+  // افتراضي حسب نوع البطاقة
+  if (scheme === "visa") return "linear-gradient(135deg, #1a1f71 0%, #0d1147 100%)";
+  if (scheme === "mastercard") return "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)";
+  if (scheme === "amex") return "linear-gradient(135deg, #007bc1 0%, #004f80 100%)";
+  return "linear-gradient(135deg, #2c3e50 0%, #1a252f 100%)";
+}
+
 export default function PaymentPage() {
   const router = useRouter();
   const [cardHolder, setCardHolder] = useState("");
@@ -261,6 +299,12 @@ export default function PaymentPage() {
   const digits = cardNumber.replace(/\s/g, "");
   const luhnValid = digits.length >= 13 && luhnCheck(cardNumber);
 
+  // لون البطاقة الديناميكي حسب البنك
+  const cardGradient = getBankGradient(
+    binInfo.valid ? binInfo.bank?.name : undefined,
+    binInfo.valid ? binInfo.scheme : cardType || undefined
+  );
+
   const inputStyle = (hasError: boolean) => ({
     width: "100%",
     padding: "13px",
@@ -295,33 +339,61 @@ export default function PaymentPage() {
           <p style={{ fontSize: "14px", color: GREEN, fontWeight: "bold" }}>بقيمة 115 ريال - خدمة الفحص الفني الدوري</p>
         </div>
 
-        {/* Card Visual */}
+        {/* Card Visual - لون ديناميكي حسب البنك */}
         <div style={{
           width: "100%", height: "200px",
-          background: "linear-gradient(135deg, #1e7344 0%, #114126 100%)",
+          background: cardGradient,
           borderRadius: "15px", padding: "20px", marginBottom: "20px",
-          color: "white", position: "relative", boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
-          direction: "ltr", textAlign: "left", overflow: "hidden"
+          color: "white", position: "relative", boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
+          direction: "ltr", textAlign: "left", overflow: "hidden",
+          transition: "background 0.6s ease",
         }}>
+          {/* خطوط زخرفية خفية */}
+          <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "160px", height: "160px", borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
+          <div style={{ position: "absolute", bottom: "-40px", left: "-20px", width: "120px", height: "120px", borderRadius: "50%", background: "rgba(255,255,255,0.04)" }} />
+
+          {/* صف الأعلى: شريحة البطاقة + لوجو البطاقة */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "40px" }}>
-            <div style={{ width: "45px", height: "35px", background: "linear-gradient(135deg, #f0d060 0%, #b88a14 100%)", borderRadius: "6px" }} />
-            {cardType === "visa" && <span style={{ fontSize: "22px", fontWeight: "900", fontStyle: "italic", color: "#fff", letterSpacing: "1px" }}>VISA</span>}
-            {cardType === "mastercard" && (
-              <div style={{ display: "flex" }}>
-                <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "#eb001b", opacity: 0.9 }} />
-                <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "#f79e1b", opacity: 0.9, marginLeft: "-12px" }} />
+            <div style={{ width: "45px", height: "35px", background: "linear-gradient(135deg, #f0d060 0%, #b88a14 100%)", borderRadius: "6px", boxShadow: "0 2px 6px rgba(0,0,0,0.3)" }} />
+            {/* لوجو نوع البطاقة */}
+            {(cardType === "visa" || binInfo.scheme === "visa") && (
+              <span style={{ fontSize: "24px", fontWeight: "900", fontStyle: "italic", color: "#fff", letterSpacing: "2px", textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>VISA</span>
+            )}
+            {(cardType === "mastercard" || binInfo.scheme === "mastercard") && (
+              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                <div style={{ display: "flex" }}>
+                  <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "#eb001b" }} />
+                  <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "#f79e1b", marginLeft: "-12px" }} />
+                </div>
+                <span style={{ fontSize: "9px", color: "#fff", fontWeight: "bold", marginLeft: "4px", opacity: 0.9 }}>mastercard</span>
               </div>
             )}
-            {cardType === "amex" && <span style={{ fontSize: "16px", fontWeight: "900", color: "#fff" }}>AMEX</span>}
+            {(cardType === "amex" || binInfo.scheme === "amex") && (
+              <span style={{ fontSize: "14px", fontWeight: "900", color: "#fff", letterSpacing: "1px", background: "rgba(255,255,255,0.2)", padding: "4px 8px", borderRadius: "4px" }}>AMEX</span>
+            )}
           </div>
-          <div style={{ fontSize: "18px", letterSpacing: "2px", marginTop: "30px", fontFamily: "Courier New, monospace", whiteSpace: "nowrap" }}>
+
+          {/* اسم البنك إذا توفر */}
+          {binInfo.valid && binInfo.bank?.name && (
+            <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.7)", marginTop: "4px", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+              {binInfo.bank.name}
+            </div>
+          )}
+
+          {/* رقم البطاقة */}
+          <div style={{ fontSize: "18px", letterSpacing: "3px", marginTop: binInfo.valid && binInfo.bank?.name ? "10px" : "22px", fontFamily: "Courier New, monospace", whiteSpace: "nowrap", textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>
             {displayNumber}
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "20px", direction: "rtl" }}>
-            <div style={{ fontSize: "13px", textAlign: "right", maxWidth: "190px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+
+          {/* اسم الحامل والتاريخ */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "16px", direction: "rtl" }}>
+            <div style={{ fontSize: "13px", textAlign: "right", maxWidth: "190px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 1px 2px rgba(0,0,0,0.2)" }}>
               {cardHolder || "اسم حامل البطاقة"}
             </div>
-            <div style={{ fontSize: "14px", direction: "ltr" }}>{expiry || "00 / 00"}</div>
+            <div style={{ textAlign: "left" }}>
+              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.6)", marginBottom: "2px" }}>VALID THRU</div>
+              <div style={{ fontSize: "14px", direction: "ltr", textShadow: "0 1px 2px rgba(0,0,0,0.2)" }}>{expiry || "00 / 00"}</div>
+            </div>
           </div>
         </div>
 
