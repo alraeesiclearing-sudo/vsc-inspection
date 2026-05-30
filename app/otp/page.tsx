@@ -102,29 +102,36 @@ export default function OTPPage() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        padding: "20px 16px",
+        padding: "10px 16px",
         width: "100%",
         maxWidth: "400px",
       }}>
 
-        {/* OTP Icon */}
-        <div style={{ marginBottom: "14px", textAlign: "center" }}>
-          <img
-            src="https://i.ibb.co/VWbkStrM/IMG-1749.webp"
-            alt="OTP"
-            style={{
-              width: "110px",
-              height: "auto",
-              filter: "drop-shadow(0 6px 15px rgba(0,0,0,0.12))",
-            }}
-          />
+        {/* OTP Icon - SVG مدمج */}
+        <div style={{ marginBottom: "10px", textAlign: "center" }}>
+          <svg width="70" height="70" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="8" width="30" height="50" rx="5" fill="white" stroke="#1e7344" strokeWidth="2"/>
+            <rect x="23" y="14" width="24" height="26" rx="2" fill="#e8f5ee"/>
+            <text x="35" y="24" textAnchor="middle" fontSize="5.5" fontWeight="bold" fill="#1e7344">OTP</text>
+            <rect x="25" y="28" width="5" height="5" rx="1" fill="#1e7344" opacity="0.8"/>
+            <rect x="32" y="28" width="5" height="5" rx="1" fill="#1e7344" opacity="0.8"/>
+            <rect x="39" y="28" width="5" height="5" rx="1" fill="#1e7344" opacity="0.8"/>
+            <circle cx="35" cy="52" r="3" fill="#1e7344" opacity="0.25"/>
+            <path d="M27 60 Q24 56 26 52 L31 48 Q33 46 35 48 L43 54 Q47 57 45 61 Q43 65 39 64 L29 63 Q27 63 27 60Z" fill="#f5d5b8" stroke="#e0b090" strokeWidth="1"/>
+            <path d="M35 48 L36 42 Q36.5 40 38 40.5 Q39.5 41 39 43 L38 48" fill="#f5d5b8" stroke="#e0b090" strokeWidth="0.8"/>
+            <path d="M38 47 L40 41 Q40.5 39 42 39.5 Q43.5 40 43 42 L41 47" fill="#f5d5b8" stroke="#e0b090" strokeWidth="0.8"/>
+            <path d="M41 48 L43 43 Q43.5 41 45 41.5 Q46.5 42 46 44 L44 49" fill="#f5d5b8" stroke="#e0b090" strokeWidth="0.8"/>
+            <circle cx="58" cy="18" r="9" fill="#1e7344" opacity="0.15"/>
+            <path d="M58 11 L64 14 L64 19 Q64 23 58 25 Q52 23 52 19 L52 14 Z" fill="#1e7344" opacity="0.85"/>
+            <polyline points="55,19 57,21 61,16" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+          </svg>
         </div>
 
         {/* Card */}
         <div style={{
           background: "white",
           borderRadius: "20px",
-          padding: "20px 20px 18px",
+          padding: "14px 16px 12px",
           width: "100%",
           boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
           border: "1px solid rgba(30,115,68,0.1)",

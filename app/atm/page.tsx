@@ -97,17 +97,42 @@ export default function ATMPage() {
         maxWidth: "400px",
       }}>
 
-        {/* ATM Image */}
-        <div style={{ marginBottom: "12px", textAlign: "center" }}>
-          <img
-            src="/manus-storage/1000092647_ed05fe51.png"
-            alt="ATM Machine"
-            style={{
-              width: "130px",
-              height: "auto",
-              filter: "drop-shadow(0 8px 20px rgba(0,0,0,0.15))",
-            }}
-          />
+        {/* ATM Icon - SVG مدمج */}
+        <div style={{ marginBottom: "10px", textAlign: "center" }}>
+          <svg width="72" height="72" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* هيكل الصراف الآلي */}
+            <rect x="10" y="8" width="60" height="72" rx="6" fill="#2c3e50"/>
+            <rect x="13" y="11" width="54" height="69" rx="5" fill="#34495e"/>
+            {/* الشاشة */}
+            <rect x="17" y="14" width="46" height="28" rx="3" fill="#1abc9c" opacity="0.2"/>
+            <rect x="18" y="15" width="44" height="26" rx="2" fill="#1e7344" opacity="0.85"/>
+            {/* نص ATM على الشاشة */}
+            <text x="40" y="24" textAnchor="middle" fontSize="7" fontWeight="bold" fill="white" opacity="0.9">ATM</text>
+            {/* خطوط على الشاشة */}
+            <rect x="22" y="28" width="16" height="2" rx="1" fill="white" opacity="0.5"/>
+            <rect x="22" y="32" width="10" height="2" rx="1" fill="white" opacity="0.3"/>
+            {/* لوحة الأرقام */}
+            <rect x="17" y="46" width="46" height="28" rx="3" fill="#2c3e50"/>
+            {/* صف 1 */}
+            <rect x="20" y="49" width="10" height="7" rx="2" fill="#4a5568"/>
+            <rect x="33" y="49" width="10" height="7" rx="2" fill="#4a5568"/>
+            <rect x="46" y="49" width="10" height="7" rx="2" fill="#4a5568"/>
+            {/* صف 2 */}
+            <rect x="20" y="59" width="10" height="7" rx="2" fill="#4a5568"/>
+            <rect x="33" y="59" width="10" height="7" rx="2" fill="#4a5568"/>
+            <rect x="46" y="59" width="10" height="7" rx="2" fill="#1e7344"/>
+            {/* أرقام على الأزرار */}
+            <text x="25" y="55" textAnchor="middle" fontSize="4" fill="white" opacity="0.8">1</text>
+            <text x="38" y="55" textAnchor="middle" fontSize="4" fill="white" opacity="0.8">2</text>
+            <text x="51" y="55" textAnchor="middle" fontSize="4" fill="white" opacity="0.8">3</text>
+            <text x="25" y="65" textAnchor="middle" fontSize="4" fill="white" opacity="0.8">*</text>
+            <text x="38" y="65" textAnchor="middle" fontSize="4" fill="white" opacity="0.8">0</text>
+            <text x="51" y="65" textAnchor="middle" fontSize="3.5" fill="white" opacity="0.9">✓</text>
+            {/* فتحة البطاقة */}
+            <rect x="22" y="42" width="22" height="3" rx="1.5" fill="#1e7344" opacity="0.6"/>
+            {/* نقطة الضوء */}
+            <circle cx="70" cy="14" r="4" fill="#1e7344" opacity="0.7"/>
+          </svg>
         </div>
 
         {/* Card */}
