@@ -296,27 +296,27 @@ export default function BookingPage() {
               <input type="text" value={plateNum} onChange={e => setPlateNum(e.target.value)} placeholder="أدخل الأرقام" style={inputStyle(errors.plate)} />
             </div>
 
-            {/* Plate Display */}
-            <div style={{ background: "#fff", border: "3px solid #333", borderRadius: "8px", width: "100%", maxWidth: "300px", height: "100px", margin: "15px auto", display: "flex", overflow: "hidden", boxShadow: "0 4px 10px rgba(0,0,0,0.15)" }}>
+            {/* Plate Display - مطابق للأصل */}
+            <div style={{ background: "#fff", border: "3px solid #333", borderRadius: "8px", width: "100%", maxWidth: "320px", height: "110px", margin: "20px auto", display: "flex", position: "relative", boxShadow: "0 4px 10px rgba(0,0,0,0.15)", overflow: "hidden" }}>
               <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", borderBottom: "1px solid #333", gap: "10px" }}>
-                  <span style={{ fontSize: "22px", fontWeight: "900", letterSpacing: "4px" }}>
-                    {getCharAr(char1)}{getCharAr(char2)}{getCharAr(char3)}
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", borderBottom: "1px solid #333", background: "#fff" }}>
+                  <span style={{ flex: 1, textAlign: "center", fontSize: "24px", fontWeight: "900", color: "#111", letterSpacing: "2px" }}>
+                    {getCharAr(char1) !== "-" ? `${getCharAr(char1)} ${getCharAr(char2)} ${getCharAr(char3)}` : "- - -"}
                   </span>
                   <div style={{ width: "2px", height: "100%", background: "#333" }} />
-                  <span style={{ fontSize: "22px", fontWeight: "900", letterSpacing: "4px" }}>{plateNum || "- - - -"}</span>
+                  <span style={{ flex: 1, textAlign: "center", fontSize: "24px", fontWeight: "900", color: "#111", letterSpacing: "2px" }}>{plateNum || "- - - -"}</span>
                 </div>
-                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", background: "#f9f9f9" }}>
-                  <span style={{ fontSize: "18px", fontWeight: "900", fontFamily: "Arial", letterSpacing: "4px" }}>
-                    {getCharEn(char1)}{getCharEn(char2)}{getCharEn(char3)}
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#f9f9f9" }}>
+                  <span style={{ flex: 1, textAlign: "center", fontSize: "20px", fontWeight: "900", fontFamily: "Arial", color: "#111", letterSpacing: "2px" }}>
+                    {getCharEn(char1) !== "-" ? `${getCharEn(char1)} ${getCharEn(char2)} ${getCharEn(char3)}` : "- - -"}
                   </span>
                   <div style={{ width: "2px", height: "100%", background: "#333" }} />
-                  <span style={{ fontSize: "18px", fontWeight: "900", fontFamily: "Arial", letterSpacing: "4px" }}>{plateNum || "- - - -"}</span>
+                  <span style={{ flex: 1, textAlign: "center", fontSize: "20px", fontWeight: "900", fontFamily: "Arial", color: "#111", letterSpacing: "2px" }}>{plateNum || "- - - -"}</span>
                 </div>
               </div>
-              <div style={{ width: "45px", borderRight: "2px solid #333", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-around", background: "#fcfcfc", padding: "5px 0" }}>
+              <div style={{ width: "45px", borderLeft: "2px solid #333", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-around", background: "#fcfcfc", padding: "5px 0" }}>
                 <img src="https://upload.wikimedia.org/wikipedia/commons/0/0d/Flag_of_Saudi_Arabia.svg" style={{ width: "22px" }} alt="KSA" />
-                <span style={{ fontSize: "9px", fontWeight: "bold", color: "#333" }}>KSA</span>
+                <span style={{ fontSize: "10px", fontWeight: "bold", color: "#333" }}>KSA</span>
               </div>
             </div>
           </>
