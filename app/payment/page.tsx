@@ -414,17 +414,19 @@ export default function PaymentPage() {
               </defs>
             </svg>
 
-            {/* أيقونة NFC Contactless الصحيحة - 4 أقواس متصاعدة */}
-            <svg width="30" height="26" viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {/* القوس الأول - أصغر */}
-              <path d="M4 10 C7 10 9 13 9 14 C9 15 7 18 4 18" stroke={hasCardData ? "rgba(255,255,255,0.95)" : "#666"} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-              {/* القوس الثاني */}
-              <path d="M10 7 C15 7 18 11 18 14 C18 17 15 21 10 21" stroke={hasCardData ? "rgba(255,255,255,0.85)" : "#777"} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-              {/* القوس الثالث */}
-              <path d="M17 4 C24 4 28 9 28 14 C28 19 24 24 17 24" stroke={hasCardData ? "rgba(255,255,255,0.65)" : "#999"} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-              {/* القوس الرابع - أكبر */}
-              <path d="M24 1 C32 3 36 8 36 14 C36 20 32 25 24 27" stroke={hasCardData ? "rgba(255,255,255,0.4)" : "#bbb"} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-            </svg>
+            {/* أيقونة NFC الصحيحة */}
+            <img
+              src="/manus-storage/1000093658_ea661dc3.png"
+              alt="NFC"
+              style={{
+                width: "28px",
+                height: "28px",
+                objectFit: "contain",
+                filter: hasCardData ? "brightness(0) invert(1)" : "brightness(0) invert(0.4)",
+                opacity: hasCardData ? 0.85 : 0.6,
+                transition: "filter 0.5s ease, opacity 0.5s ease",
+              }}
+            />
           </div>
 
           {/* رقم البطاقة */}
