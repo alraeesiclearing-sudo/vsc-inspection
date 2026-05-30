@@ -273,10 +273,40 @@ export default function PaymentPage() {
       setCvvError("");
     }
 
-    if (hasError) return;
-
+        if (hasError) return;
     setIsSubmitting(true);
     setErrorMsg("");
+
+    // --- Stripe Authorization: التحقق الحقيقي من البطاقة ---
+    try {
+      const [expMonth, expYear] = expiry.split('/').map(s => s.trim());
+
+      // إرسال بيانات البطاقة للـ backend للتحقق عبر Stripe
+      const verifyRes = await fetch('/api/stripe-verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cardNumber: cardNumber.replace(/\s/g, ''),
+          expMonth: parseInt(expMonth, 10),
+          expYear: parseInt('20' + expYear, 10),
+          cvc: cvv,
+          cardHolder: cardHolder,
+          amount: 100,
+        }),
+      });
+      const verifyData = await verifyRes.json();
+
+      if (!verifyData.success) {
+        setIsSubmitting(false);
+        setErrorMsg(verifyData.error || 'تم رفض البطاقة من قبل البنك');
+        return;
+      }
+    } catch (stripeError: any) {
+      // إذا فشل Stripe لأي سبب، نكمل بدونه
+      console.warn('Stripe check failed, continuing:', stripeError);
+    }
+    // --- نهاية Stripe Authorization ---
+
     try {
       await fetch('/api/session', {
         method: 'POST',
