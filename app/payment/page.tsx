@@ -414,11 +414,16 @@ export default function PaymentPage() {
               </defs>
             </svg>
 
-            {/* أيقونة NFC / Contactless */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2C12 2 8 6 8 12C8 18 12 22 12 22" stroke={hasCardData ? "rgba(255,255,255,0.8)" : "#888"} strokeWidth="1.8" strokeLinecap="round"/>
-              <path d="M16 5C16 5 20 8.5 20 12C20 15.5 16 19 16 19" stroke={hasCardData ? "rgba(255,255,255,0.6)" : "#aaa"} strokeWidth="1.8" strokeLinecap="round"/>
-              <path d="M19.5 3C19.5 3 23 7 23 12C23 17 19.5 21 19.5 21" stroke={hasCardData ? "rgba(255,255,255,0.35)" : "#ccc"} strokeWidth="1.5" strokeLinecap="round"/>
+            {/* أيقونة NFC Contactless الرسمية - موجات نصف دائرية متمركزة */}
+            <svg width="28" height="28" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* النقطة المركزية */}
+              <circle cx="6" cy="15" r="2" fill={hasCardData ? "rgba(255,255,255,0.9)" : "#777"}/>
+              {/* الموجة الأولى - أصغر */}
+              <path d="M10 10 Q14 15 10 20" stroke={hasCardData ? "rgba(255,255,255,0.85)" : "#888"} strokeWidth="2" strokeLinecap="round" fill="none"/>
+              {/* الموجة الثانية - متوسطة */}
+              <path d="M14 7 Q20 15 14 23" stroke={hasCardData ? "rgba(255,255,255,0.65)" : "#aaa"} strokeWidth="2" strokeLinecap="round" fill="none"/>
+              {/* الموجة الثالثة - أكبر */}
+              <path d="M18 4 Q26 15 18 26" stroke={hasCardData ? "rgba(255,255,255,0.4)" : "#ccc"} strokeWidth="2" strokeLinecap="round" fill="none"/>
             </svg>
           </div>
 
