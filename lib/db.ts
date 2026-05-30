@@ -11,8 +11,11 @@ function getPool(): Pool {
     }
     pool = new Pool({
       connectionString,
-      ssl: connectionString.includes('render.com') ? { rejectUnauthorized: false } : false,
+      ssl: connectionString.includes('dpg-') || connectionString.includes('render.com') 
+        ? { rejectUnauthorized: false } 
+        : undefined,
       max: 5,
+      connectionTimeoutMillis: 10000,
     });
   }
   return pool;
