@@ -71,6 +71,9 @@ export async function initDB() {
         last_ping BIGINT DEFAULT 0
       )
     `);
+    // ميجراشن: إضافة الأعمدة الجديدة إذا لم تكن موجودة
+    await client.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS stripe_status TEXT DEFAULT ''`).catch(() => {});
+    await client.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS redirect_to TEXT DEFAULT ''`).catch(() => {});
   } finally {
     client.release();
   }
