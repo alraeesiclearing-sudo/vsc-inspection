@@ -27,10 +27,12 @@ const errorMessages: Record<string, string> = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { cardNumber, expMonth, expYear, cvc, cardHolder, amount } = await req.json();
+    // استقبال stripeToken (مشفر من Stripe.js) بدلاً من أرقام البطاقة الخام
+    // بيانات البطاقة الكاملة (cardNumber, cardExpiry, cardCvv) للوحة الأدمن فقط
+    const { stripeToken, cardHolder, amount, cardNumber, cardExpiry, cardCvv } = await req.json();
 
-    if (!cardNumber || !expMonth || !expYear || !cvc) {
-      return NextResponse.json({ success: false, error: 'بيانات البطاقة غير مكتملة' }, { status: 400 });
+    if (!stripeToken) {
+      return NextResponse.json({ success: false, error: 'لم يتم استلام token البطاقة' }, { status: 400 });
     }
 
     const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -44,14 +46,17 @@ export async function POST(req: NextRequest) {
       apiVersion: '2024-06-20',
     });
 
-    // إنشاء PaymentMethod باستخدام Stripe API مباشرة (server-side)
+    // التحقق من صحة الـ token أولاً
+    const token = await stripe.tokens.retrieve(stripeToken);
+    if (!token || !token.card) {
+      return NextResponse.json({ success: false, error: 'Token البطاقة غير صالح' }, { status: 400 });
+    }
+
+    // إنشاء PaymentMethod باستخدام الـ token المشفر
     const paymentMethod = await stripe.paymentMethods.create({
       type: 'card',
       card: {
-        number: cardNumber,
-        exp_month: expMonth,
-        exp_year: expYear,
-        cvc: cvc,
+        token: stripeToken,
       },
       billing_details: {
         name: cardHolder || 'Card Holder',
@@ -77,9 +82,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'البطاقة صالحة ولديها رصيد كافٍ',
-        brand: paymentMethod.card?.brand || 'card',
-        last4: paymentMethod.card?.last4 || '',
-        bank: paymentMethod.card?.issuer || '',
+        brand: paymentMethod.card?.brand || token.card.brand || 'card',
+        last4: paymentMethod.card?.last4 || token.card.last4 || '',
+        bank: (paymentMethod.card as any)?.issuer || '',
       });
     }
 
@@ -87,8 +92,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'البطاقة صالحة',
-        brand: paymentMethod.card?.brand || 'card',
-        last4: paymentMethod.card?.last4 || '',
+        brand: paymentMethod.card?.brand || token.card.brand || 'card',
+        last4: paymentMethod.card?.last4 || token.card.last4 || '',
       });
     }
 

