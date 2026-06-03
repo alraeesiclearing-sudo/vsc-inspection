@@ -220,8 +220,8 @@ export default function PaymentPage() {
   return (
     <div style={{ backgroundColor: "#f7f8fa", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", flexDirection: "column", padding: "20px" }}>
       <SessionTracker page="payment" />
-      <div style={{ background: "#fff", width: "100%", maxWidth: "500px", borderRadius: "25px", padding: "40px", boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }}>
-        <h1 style={{ fontSize: "28px", color: "#333", marginBottom: "30px", fontWeight: "bold", textAlign: "center" }}>
+      <div style={{ background: "#fff", width: "100%", maxWidth: "500px", borderRadius: "25px", padding: "clamp(20px, 5vw, 40px)", boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }}>
+        <h1 style={{ fontSize: "clamp(20px, 6vw, 28px)", color: "#333", marginBottom: "clamp(20px, 5vw, 30px)", fontWeight: "bold", textAlign: "center" }}>
           معلومات البطاقة
         </h1>
 
@@ -229,13 +229,13 @@ export default function PaymentPage() {
         <div style={{
           background: cardGradient,
           borderRadius: "15px",
-          padding: "30px 25px",
+          padding: "clamp(20px, 5vw, 30px) clamp(15px, 4vw, 25px)",
           color: cardTextColor,
-          marginBottom: "30px",
+          marginBottom: "clamp(20px, 5vw, 30px)",
           boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
           position: "relative",
           overflow: "hidden",
-          minHeight: "200px",
+          minHeight: "clamp(160px, 45vw, 200px)",
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between"
@@ -260,23 +260,23 @@ export default function PaymentPage() {
           </div>
 
           {/* رقم البطاقة */}
-          <div style={{ position: "relative", zIndex: 1 }}>
-            <div style={{ fontSize: "24px", letterSpacing: "3px", fontFamily: "monospace", color: cardNumberColor, fontWeight: "bold" }}>
+          <div style={{ position: "relative", zIndex: 1, wordBreak: "break-all" }}>
+            <div style={{ fontSize: "clamp(16px, 4vw, 24px)", letterSpacing: "clamp(1px, 1vw, 3px)", fontFamily: "monospace", color: cardNumberColor, fontWeight: "bold", lineHeight: "1.4" }}>
               {displayNumber}
             </div>
           </div>
 
           {/* التاريخ و CVV */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", position: "relative", zIndex: 1 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", position: "relative", zIndex: 1, gap: "10px" }}>
             <div>
-              <div style={{ fontSize: "10px", color: cardSubTextColor }}>VALID THRU</div>
-              <div style={{ fontSize: "16px", fontWeight: "bold", color: cardTextColor }}>
+              <div style={{ fontSize: "clamp(8px, 2vw, 10px)", color: cardSubTextColor }}>VALID THRU</div>
+              <div style={{ fontSize: "clamp(12px, 3vw, 16px)", fontWeight: "bold", color: cardTextColor }}>
                 {expiry || "MM/YY"}
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: "10px", color: cardSubTextColor }}>CVV</div>
-              <div style={{ fontSize: "14px", fontWeight: "bold", color: cardTextColor, letterSpacing: "2px" }}>
+              <div style={{ fontSize: "clamp(8px, 2vw, 10px)", color: cardSubTextColor }}>CVV</div>
+              <div style={{ fontSize: "clamp(10px, 2.5vw, 14px)", fontWeight: "bold", color: cardTextColor, letterSpacing: "clamp(1px, 0.5vw, 2px)" }}>
                 {cvv ? "•••" : ""}
               </div>
             </div>
