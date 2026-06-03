@@ -135,9 +135,9 @@ export default function PaymentPage() {
   const displayNumber = cardNumber || "#### #### #### ####";
 
   return (
-    <div style={{ backgroundColor: "#f7f8fa", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", padding: "20px" }}>
+    <div style={{ backgroundColor: "#f7f8fa", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", padding: "0", margin: "0" }}>
       <SessionTracker page="payment" />
-      <div style={{ background: "#fff", width: "100%", maxWidth: "420px", borderRadius: "25px", padding: "25px 20px", boxShadow: "0 10px 30px rgba(0,0,0,0.08)", textAlign: "center" }}>
+      <div style={{ background: "#fff", width: "100%", height: "100vh", maxWidth: "none", borderRadius: "0", padding: "30px 20px", boxShadow: "none", textAlign: "center", overflowY: "auto" }}>
 
         {/* Header */}
         <div style={{ marginBottom: "20px" }}>
