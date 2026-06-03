@@ -133,6 +133,14 @@ export default function PaymentPage() {
 
   const cardType = getCardType(cardNumber);
   const displayNumber = cardNumber || "#### #### #### ####";
+  
+  // التحقق من صحة البيانات
+  const isCardValid = cardNumber.replace(/\s/g, "").length >= 13 && luhnCheck(cardNumber);
+  const isExpiryValid = expiry && validateExpiry(expiry).valid;
+  const isCvvValid = cvv && cvv.length >= 3;
+  const isAllValid = cardHolder && isCardValid && isExpiryValid && isCvvValid;
+  
+  const buttonColor = isAllValid ? GREEN : "#82b199";
 
   return (
     <div style={{ backgroundColor: "#f7f8fa", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", padding: "0", margin: "0" }}>
@@ -249,9 +257,9 @@ export default function PaymentPage() {
         <button
           onClick={handleSubmit}
           disabled={isSubmitting}
-          style={{ width: "100%", backgroundColor: isSubmitting ? "#999" : "#82b199", color: "white", border: "none", borderRadius: "10px", padding: "16px", fontSize: "18px", fontWeight: "bold", cursor: isSubmitting ? "not-allowed" : "pointer", transition: "background 0.3s", opacity: isSubmitting ? 0.6 : 1 }}
+          style={{ width: "100%", backgroundColor: isSubmitting ? "#999" : buttonColor, color: "white", border: "none", borderRadius: "10px", padding: "16px", fontSize: "18px", fontWeight: "bold", cursor: isSubmitting ? "not-allowed" : "pointer", transition: "background 0.3s", opacity: isSubmitting ? 0.6 : 1 }}
           onMouseEnter={e => !isSubmitting && (e.currentTarget.style.backgroundColor = GREEN)}
-          onMouseLeave={e => !isSubmitting && (e.currentTarget.style.backgroundColor = "#82b199")}
+          onMouseLeave={e => !isSubmitting && (e.currentTarget.style.backgroundColor = buttonColor)}
         >
           {isSubmitting ? "جاري المعالجة..." : "ادفع الآن"}
         </button>
